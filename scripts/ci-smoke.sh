@@ -8,6 +8,8 @@ compose_files=(
 service="workbench"
 temp_root="$(mktemp -d)"
 
+export WORKBENCH_UID="$(id -u)"
+export WORKBENCH_GID="$(id -g)"
 export STATE_DIR="${temp_root}/state/home"
 export PROJECTS_DIR="${temp_root}/state/projects"
 export REFERENCES_DIR="${temp_root}/state/references"
@@ -30,6 +32,7 @@ chmod 0777 \
 
 cleanup() {
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
   rm -rf "${temp_root}"
 }
 
@@ -50,7 +53,28 @@ container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 
 docker inspect -f '{{.State.Running}}' "${container_id}" | grep -qx true
 
-run_oneoff_cli_check() {
+wait_for_exec_ready() {
+  local attempts=0
+
+  while true; do
+    if docker compose "${compose_files[@]}" exec -T "${service}" true >/dev/null 2>&1; then
+      return 0
+    fi
+
+    attempts=$((attempts + 1))
+    if (( attempts > 30 )); then
+      printf 'Timed out waiting for %s exec readiness.\n' "${service}" >&2
+      docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
+      return 1
+    fi
+
+    sleep 1
+  done
+}
+
+wait_for_exec_ready
+
+run_exec_cli_check() {
   local version_cmd="$1"
   local version_pattern="$2"
   local help_cmd="$3"
@@ -59,11 +83,11 @@ run_oneoff_cli_check() {
   local help_output
 
   version_output="$(
-    docker compose "${compose_files[@]}" run --rm --no-deps "${service}" \
+    docker compose "${compose_files[@]}" exec -T "${service}" \
       bash -lc "${version_cmd}" 2>&1
   )"
   help_output="$(
-    docker compose "${compose_files[@]}" run --rm --no-deps "${service}" \
+    docker compose "${compose_files[@]}" exec -T "${service}" \
       bash -lc "${help_cmd}" 2>&1
   )"
 
@@ -111,7 +135,7 @@ docker compose "${compose_files[@]}" exec -T \
   run_cli_check "codex --version" "codex --help"
 '
 
-run_oneoff_cli_check \
+run_exec_cli_check \
   "gemini --version" \
   "^${expected_gemini_version}$" \
   "gemini --help" \

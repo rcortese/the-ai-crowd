@@ -18,6 +18,8 @@ fail() {
   exit 1
 }
 
+export WORKBENCH_UID="$(id -u)"
+export WORKBENCH_GID="$(id -g)"
 export STATE_DIR="${temp_root}/state/home"
 export PROJECTS_DIR="${temp_root}/state/projects"
 export REFERENCES_DIR="${temp_root}/state/references"
@@ -42,6 +44,7 @@ cleanup() {
   docker compose "${compose_base[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   docker compose "${compose_docker[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   wait_for_cleanup
+  chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
   rm -rf "${temp_root}"
 }
 
@@ -76,9 +79,30 @@ run_healthcheck() {
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   wait_for_cleanup
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
+  wait_for_exec_ready "${compose_files[@]}"
   docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
   wait_for_cleanup
+}
+
+wait_for_exec_ready() {
+  local -a compose_files=("$@")
+  local attempts=0
+
+  while true; do
+    if docker compose "${compose_files[@]}" exec -T "${service}" true >/dev/null 2>&1; then
+      return 0
+    fi
+
+    attempts=$((attempts + 1))
+    if (( attempts > 30 )); then
+      printf 'Timed out waiting for %s exec readiness.\n' "${service}" >&2
+      docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
+      exit 1
+    fi
+
+    sleep 1
+  done
 }
 
 run_healthcheck "${compose_base[@]}"
