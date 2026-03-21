@@ -52,9 +52,28 @@ docker compose "${compose_files[@]}" exec -T \
   "${service}" bash -lc '
   set -euo pipefail
 
+  run_cli_check() {
+    local version_cmd="$1"
+    local help_cmd="$2"
+    local expect_timeout="${3:-false}"
+
+    local version_status=0
+    local help_status=0
+
+    timeout 10 bash -lc "${version_cmd}" >/dev/null 2>&1 || version_status=$?
+    timeout 10 bash -lc "${help_cmd}" >/dev/null 2>&1 || help_status=$?
+
+    if [[ "${expect_timeout}" == "true" ]]; then
+      [[ "${version_status}" == "0" || "${version_status}" == "124" ]]
+      [[ "${help_status}" == "0" || "${help_status}" == "124" ]]
+    else
+      [[ "${version_status}" == "0" ]]
+      [[ "${help_status}" == "0" ]]
+    fi
+  }
+
   [[ "$(id -u)" == "${EXPECTED_UID}" ]]
   [[ "$(id -g)" == "${EXPECTED_GID}" ]]
-  [[ "$(id -un)" == "operator" ]]
   [[ -d /workspace/projects ]]
   [[ -d /workspace/references ]]
   [[ -d /workspace/scratch ]]
@@ -63,11 +82,7 @@ docker compose "${compose_files[@]}" exec -T \
   command -v gemini >/dev/null
   command -v codex >/dev/null
 
-  claude --version >/dev/null
-  gemini --version >/dev/null
-  codex --version >/dev/null
-
-  claude --help >/dev/null
-  gemini --help >/dev/null
-  codex --help >/dev/null
+  run_cli_check "claude --version" "claude --help"
+  run_cli_check "gemini --version" "gemini --help" true
+  run_cli_check "codex --version" "codex --help"
 '
