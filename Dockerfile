@@ -66,12 +66,23 @@ RUN apt-get update && \
       make \
       pkg-config \
       openssh-client && \
-    ln -s /usr/bin/fdfind /usr/local/bin/fd && \
-    ln -s /usr/bin/batcat /usr/local/bin/bat && \
-    groupadd --gid "${USER_GID}" "${USERNAME}" && \
-    useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}" && \
+    ln -sf /usr/bin/fdfind /usr/local/bin/fd && \
+    ln -sf /usr/bin/batcat /usr/local/bin/bat && \
+    if ! getent group "${USER_GID}" >/dev/null; then \
+      groupadd --gid "${USER_GID}" "${USERNAME}"; \
+    fi && \
+    if id -u "${USERNAME}" >/dev/null 2>&1; then \
+      usermod --gid "${USER_GID}" --home "/home/${USERNAME}" --shell /bin/bash "${USERNAME}"; \
+    elif getent passwd "${USER_UID}" >/dev/null; then \
+      existing_user="$(getent passwd "${USER_UID}" | cut -d: -f1)" && \
+      usermod --login "${USERNAME}" --home "/home/${USERNAME}" --move-home --shell /bin/bash "${existing_user}" && \
+      usermod --gid "${USER_GID}" "${USERNAME}"; \
+    else \
+      useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}"; \
+    fi && \
     mkdir -p /workspace/projects /workspace/references /workspace/scratch /var/tmp/ai-crowd && \
-    chown -R "${USERNAME}:${USERNAME}" /home/${USERNAME} /workspace /var/tmp/ai-crowd && \
+    mkdir -p /home/${USERNAME} && \
+    chown -R "${USER_UID}:${USER_GID}" /home/${USERNAME} /workspace /var/tmp/ai-crowd && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
