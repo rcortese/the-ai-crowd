@@ -38,6 +38,10 @@ trap cleanup EXIT
 config_user="$(docker compose "${compose_files[@]}" config --format json | jq -r '.services.workbench.user')"
 expected_uid="${config_user%%:*}"
 expected_gid="${config_user##*:}"
+expected_gemini_version="$(
+  docker compose "${compose_files[@]}" config --format json |
+    jq -r '.services.workbench.build.args.GEMINI_CLI_VERSION'
+)"
 
 docker compose "${compose_files[@]}" up -d --no-build "${service}"
 
@@ -45,6 +49,27 @@ container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 [[ -n "${container_id}" ]]
 
 docker inspect -f '{{.State.Running}}' "${container_id}" | grep -qx true
+
+run_oneoff_cli_check() {
+  local version_cmd="$1"
+  local version_pattern="$2"
+  local help_cmd="$3"
+  local help_pattern="$4"
+  local version_output
+  local help_output
+
+  version_output="$(
+    docker compose "${compose_files[@]}" run --rm --no-deps "${service}" \
+      bash -lc "${version_cmd}" 2>&1
+  )"
+  help_output="$(
+    docker compose "${compose_files[@]}" run --rm --no-deps "${service}" \
+      bash -lc "${help_cmd}" 2>&1
+  )"
+
+  printf '%s\n' "${version_output}" | grep -q "${version_pattern}"
+  printf '%s\n' "${help_output}" | grep -q "${help_pattern}"
+}
 
 docker compose "${compose_files[@]}" exec -T \
   -e EXPECTED_UID="${expected_uid}" \
@@ -83,6 +108,11 @@ docker compose "${compose_files[@]}" exec -T \
   command -v codex >/dev/null
 
   run_cli_check "claude --version" "claude --help"
-  run_cli_check "gemini --version" "gemini --help" true
   run_cli_check "codex --version" "codex --help"
 '
+
+run_oneoff_cli_check \
+  "gemini --version" \
+  "^${expected_gemini_version}$" \
+  "gemini --help" \
+  "Gemini CLI - Launch an interactive CLI"
