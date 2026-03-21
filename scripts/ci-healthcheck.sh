@@ -1,17 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-compose_base=(
-  -f docker-compose.yml
-)
-
-compose_docker=(
-  -f docker-compose.yml
-  -f docker-compose.docker.yml
-)
-
 service="the-ai-crowd"
 temp_root="$(mktemp -d)"
+repo_root="$(pwd)"
+temp_repo="${temp_root}/repo"
+compose_project="ai-crowd-ci-${RANDOM}${RANDOM}"
+container_name="${compose_project}-the-ai-crowd"
+network_name="${compose_project}_default"
+override_file="${temp_repo}/docker-compose.ci.override.yml"
 
 fail() {
   printf 'The AI Crowd CI healthcheck failed: %s\n' "$*" >&2
@@ -20,25 +17,42 @@ fail() {
 
 export WORKBENCH_UID="$(id -u)"
 export WORKBENCH_GID="$(id -g)"
-export STATE_DIR="${temp_root}/state/home"
-export PROJECTS_DIR="${temp_root}/state/projects"
-export REFERENCES_DIR="${temp_root}/state/references"
-export SCRATCH_DIR="${temp_root}/state/scratch"
-export SSH_DIR="${temp_root}/state/ssh"
 
+mkdir -p "${temp_repo}"
+cp docker-compose.yml docker-compose.docker.yml Dockerfile README.md ARCHITECTURE.md GUIDELINES.md "${temp_repo}/"
+cp -r scripts config .dockerignore .gitignore .github "${temp_repo}/"
 mkdir -p \
-  "${STATE_DIR}" \
-  "${PROJECTS_DIR}" \
-  "${REFERENCES_DIR}" \
-  "${SCRATCH_DIR}" \
-  "${SSH_DIR}"
+  "${temp_repo}/state/home" \
+  "${temp_repo}/state/projects" \
+  "${temp_repo}/state/references" \
+  "${temp_repo}/state/scratch" \
+  "${temp_repo}/state/ssh"
 
 chmod 0777 \
-  "${STATE_DIR}" \
-  "${PROJECTS_DIR}" \
-  "${REFERENCES_DIR}" \
-  "${SCRATCH_DIR}" \
-  "${SSH_DIR}"
+  "${temp_repo}/state/home" \
+  "${temp_repo}/state/projects" \
+  "${temp_repo}/state/references" \
+  "${temp_repo}/state/scratch" \
+  "${temp_repo}/state/ssh"
+
+cat > "${override_file}" <<EOF
+services:
+  the-ai-crowd:
+    container_name: ${container_name}
+EOF
+
+compose_base=(
+  -f docker-compose.yml
+  -f docker-compose.ci.override.yml
+)
+
+compose_docker=(
+  -f docker-compose.yml
+  -f docker-compose.docker.yml
+  -f docker-compose.ci.override.yml
+)
+
+export COMPOSE_PROJECT_NAME="${compose_project}"
 
 cleanup() {
   docker compose "${compose_base[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
@@ -50,10 +64,12 @@ cleanup() {
 
 trap cleanup EXIT
 
+cd "${temp_repo}"
+
 wait_for_cleanup() {
   local attempts=0
 
-  while docker ps -a --filter name='^/the-ai-crowd$' -q | grep -q .; do
+  while docker ps -a --filter "name=^/${container_name}$" -q | grep -q .; do
     attempts=$((attempts + 1))
     if (( attempts > 30 )); then
       printf 'Timed out waiting for container cleanup.\n' >&2
@@ -63,7 +79,7 @@ wait_for_cleanup() {
   done
 
   attempts=0
-  while docker network ls --format '{{.Name}}' | grep -qx 'the-ai-crowd_default'; do
+  while docker network ls --format '{{.Name}}' | grep -qx "${network_name}"; do
     attempts=$((attempts + 1))
     if (( attempts > 30 )); then
       printf 'Timed out waiting for network cleanup.\n' >&2
@@ -111,3 +127,5 @@ run_healthcheck "${compose_base[@]}"
 docker_gid="$(stat -c '%g' /var/run/docker.sock)"
 export DOCKER_GID="${docker_gid}"
 run_healthcheck "${compose_docker[@]}"
+
+cd "${repo_root}"
