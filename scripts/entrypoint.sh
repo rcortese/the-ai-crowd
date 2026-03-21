@@ -2,6 +2,8 @@
 set -euo pipefail
 
 home_dir="${HOME:-/home/operator}"
+workbench_uid="$(id -u)"
+workbench_gid="$(id -g)"
 
 author_name="${GIT_AUTHOR_NAME:-}"
 author_email="${GIT_AUTHOR_EMAIL:-}"
@@ -24,16 +26,36 @@ if [[ -z "${author_email}" && -n "${committer_email}" ]]; then
   export GIT_AUTHOR_EMAIL="${committer_email}"
 fi
 
-mkdir -p \
-  "${home_dir}/.config" \
-  "${home_dir}/.cache" \
-  "${home_dir}/.local/share" \
-  /workspace/projects \
-  /workspace/references \
-  /workspace/scratch
+ensure_directory() {
+  local dir_path="$1"
+
+  if mkdir -p "${dir_path}" 2>/dev/null; then
+    return 0
+  fi
+
+  cat >&2 <<EOF
+The AI Crowd workbench could not write to '${dir_path}'.
+The container is running as UID:GID ${workbench_uid}:${workbench_gid}, but the bind-mounted host path does not allow writes.
+Fix the owner/permissions of the mounted directory or align WORKBENCH_UID and WORKBENCH_GID in .env with the host path owner, then restart the container.
+EOF
+  exit 70
+}
+
+ensure_directory "${home_dir}/.config"
+ensure_directory "${home_dir}/.cache"
+ensure_directory "${home_dir}/.local/share"
+ensure_directory /workspace/projects
+ensure_directory /workspace/references
+ensure_directory /workspace/scratch
 
 if [[ -d "${home_dir}/.ssh" ]]; then
-  chmod 700 "${home_dir}/.ssh"
+  if ! chmod 700 "${home_dir}/.ssh" 2>/dev/null; then
+    cat >&2 <<EOF
+The AI Crowd workbench could not update permissions for '${home_dir}/.ssh'.
+The mounted SSH directory must be writable by UID:GID ${workbench_uid}:${workbench_gid}.
+EOF
+    exit 70
+  fi
   find "${home_dir}/.ssh" -type f \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 644 {} +
   find "${home_dir}/.ssh" -type f ! \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 600 {} +
 fi
