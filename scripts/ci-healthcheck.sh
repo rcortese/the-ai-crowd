@@ -41,17 +41,44 @@ chmod 0777 \
 cleanup() {
   docker compose "${compose_base[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   docker compose "${compose_docker[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  wait_for_cleanup
   rm -rf "${temp_root}"
 }
 
 trap cleanup EXIT
 
+wait_for_cleanup() {
+  local attempts=0
+
+  while docker ps -a --filter name='^/the-ai-crowd$' -q | grep -q .; do
+    attempts=$((attempts + 1))
+    if (( attempts > 30 )); then
+      printf 'Timed out waiting for container cleanup.\n' >&2
+      exit 1
+    fi
+    sleep 1
+  done
+
+  attempts=0
+  while docker network ls --format '{{.Name}}' | grep -qx 'the-ai-crowd_default'; do
+    attempts=$((attempts + 1))
+    if (( attempts > 30 )); then
+      printf 'Timed out waiting for network cleanup.\n' >&2
+      exit 1
+    fi
+    sleep 1
+  done
+}
+
 run_healthcheck() {
   local -a compose_files=("$@")
 
+  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  wait_for_cleanup
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
   docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
+  wait_for_cleanup
 }
 
 run_healthcheck "${compose_base[@]}"
