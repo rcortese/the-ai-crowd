@@ -27,3 +27,6 @@ jobs:
 
       - name: Build workbench image
         run: docker compose -f docker-compose.yml build workbench
+
+      - name: Smoke test runtime behavior
+        run: bash scripts/ci-smoke.sh
