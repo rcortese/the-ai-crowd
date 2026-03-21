@@ -1,5 +1,5 @@
 services:
-  workbench:
+  the-ai-crowd:
     build:
       context: .
       args:

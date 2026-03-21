@@ -5,7 +5,7 @@ compose_files=(
   -f docker-compose.yml
 )
 
-service="workbench"
+service="the-ai-crowd"
 temp_root="$(mktemp -d)"
 
 export WORKBENCH_UID="$(id -u)"
@@ -38,12 +38,12 @@ cleanup() {
 
 trap cleanup EXIT
 
-config_user="$(docker compose "${compose_files[@]}" config --format json | jq -r '.services.workbench.user')"
+config_user="$(docker compose "${compose_files[@]}" config --format json | jq -r '.services["the-ai-crowd"].user')"
 expected_uid="${config_user%%:*}"
 expected_gid="${config_user##*:}"
 expected_gemini_version="$(
   docker compose "${compose_files[@]}" config --format json |
-    jq -r '.services.workbench.build.args.GEMINI_CLI_VERSION'
+    jq -r '.services["the-ai-crowd"].build.args.GEMINI_CLI_VERSION'
 )"
 
 docker compose "${compose_files[@]}" up -d --no-build "${service}"

@@ -23,7 +23,7 @@ This repository now includes a runnable phase-one scaffold:
 3. Create the local mount targets:
    - `mkdir -p state/home state/projects state/references state/scratch state/ssh`
    - `chown -R "$(id -u):$(id -g)" state`
-4. Build and start the workbench:
+4. Build and start the container:
    - `docker compose up -d --build`
 5. Enter the shell:
    - `docker exec -it the-ai-crowd bash -l`

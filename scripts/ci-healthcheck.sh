@@ -10,7 +10,7 @@ compose_docker=(
   -f docker-compose.docker.yml
 )
 
-service="workbench"
+service="the-ai-crowd"
 temp_root="$(mktemp -d)"
 
 fail() {

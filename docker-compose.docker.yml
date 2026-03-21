@@ -1,5 +1,5 @@
 services:
-  workbench:
+  the-ai-crowd:
     environment:
       AI_CROWD_ENABLE_DOCKER: "true"
     group_add:

@@ -31,8 +31,8 @@ jobs:
           DOCKER_GID: "998"
         run: docker compose -f docker-compose.yml -f docker-compose.docker.yml config
 
-      - name: Build workbench image
-        run: docker compose -f docker-compose.yml build workbench
+      - name: Build image
+        run: docker compose -f docker-compose.yml build the-ai-crowd
 
       - name: Smoke test runtime behavior
         run: bash scripts/ci-smoke.sh
