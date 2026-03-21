@@ -25,25 +25,15 @@ check_git_config() {
   [[ "${actual}" == "${expected}" ]] || fail "git config ${key} expected ${expected}, got ${actual:-<unset>}"
 }
 
-check_git_identity_presence_pair() {
-  local author_key="$1"
-  local committer_key="$2"
-  local author_value
-  local committer_value
+check_git_include_path() {
+  local include_path="$1"
 
-  author_value="${!author_key:-}"
-  committer_value="${!committer_key:-}"
-
-  if [[ -n "${author_value}" && -z "${committer_value}" ]]; then
-    fail "${committer_key} must be set when ${author_key} is set"
-  fi
-
-  if [[ -z "${author_value}" && -n "${committer_value}" ]]; then
-    fail "${author_key} must be set when ${committer_key} is set"
-  fi
+  git config --global --get-all include.path | grep -Fx "${include_path}" >/dev/null ||
+    fail "git config include.path is missing ${include_path}"
 }
 
 home_dir="${HOME:-/home/operator}"
+gitconfig_path="/workspace/config/gitconfig"
 
 require_dir "${home_dir}"
 require_dir "${home_dir}/.config"
@@ -58,19 +48,12 @@ require_command claude
 require_command gemini
 require_command codex
 
-check_git_identity_presence_pair GIT_AUTHOR_NAME GIT_COMMITTER_NAME
-check_git_identity_presence_pair GIT_AUTHOR_EMAIL GIT_COMMITTER_EMAIL
-
 check_git_config init.defaultBranch main
 check_git_config pull.rebase false
 check_git_config core.editor vim
 
-if [[ -n "${GIT_AUTHOR_NAME:-}" ]]; then
-  check_git_config user.name "${GIT_AUTHOR_NAME}"
-fi
-
-if [[ -n "${GIT_AUTHOR_EMAIL:-}" ]]; then
-  check_git_config user.email "${GIT_AUTHOR_EMAIL}"
+if [[ -f "${gitconfig_path}" ]]; then
+  check_git_include_path "${gitconfig_path}"
 fi
 
 if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" == "true" ]]; then
