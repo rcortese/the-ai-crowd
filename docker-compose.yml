@@ -10,7 +10,7 @@ services:
         CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-1.0.43}
         GEMINI_CLI_VERSION: ${GEMINI_CLI_VERSION:-0.1.18}
         CODEX_CLI_VERSION: ${CODEX_CLI_VERSION:-0.26.0}
-    image: ${IMAGE_NAME:-the-ai-crowd}:${IMAGE_TAG:-local}
+    image: the-ai-crowd:local
     container_name: the-ai-crowd
     init: true
     restart: unless-stopped
@@ -33,10 +33,10 @@ services:
       - /tmp
       - /run
     volumes:
-      - ${STATE_DIR:-./state/home}:/home/${WORKBENCH_USER:-operator}
-      - ${PROJECTS_DIR:-./state/projects}:/workspace/projects
-      - ${REFERENCES_DIR:-./state/references}:/workspace/references:ro
-      - ${SCRATCH_DIR:-./state/scratch}:/workspace/scratch
+      - ./state/home:/home/${WORKBENCH_USER:-operator}
+      - ./state/projects:/workspace/projects
+      - ./state/references:/workspace/references:ro
+      - ./state/scratch:/workspace/scratch
       - ./config:/workspace/config:ro
-      - ${SSH_DIR:-./state/ssh}:/home/${WORKBENCH_USER:-operator}/.ssh
+      - ./state/ssh:/home/${WORKBENCH_USER:-operator}/.ssh
       - /etc/localtime:/etc/localtime:ro

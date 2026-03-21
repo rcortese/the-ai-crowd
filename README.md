@@ -19,7 +19,7 @@ This repository now includes a runnable phase-one scaffold:
 ## Quick Start
 
 1. Copy `.env.example` to `.env`.
-2. Set API keys and adjust UID, GID, and paths for your host.
+2. Set API keys and adjust UID/GID for your host.
    - for Git identity and other shell defaults, prefer files under `./config/` instead of adding more variables to `.env`
 3. Create the local mount targets:
    - `mkdir -p state/home state/projects state/references state/scratch state/ssh config`
@@ -45,11 +45,12 @@ This repository now includes a runnable phase-one scaffold:
 The workbench now mounts `./config` read-only at `/workspace/config`.
 
 - Use `./config/gitconfig` for persistent Git identity and aliases that should be injected into the container as static configuration.
-- Keep `.env` focused on runtime secrets, UID/GID alignment, and capability toggles.
+- The standard host layout is fixed in compose: `./state/{home,projects,references,scratch,ssh}` plus `./config`.
+- Keep `.env` focused on runtime secrets, UID/GID alignment, tool versions, and capability toggles.
 
 ## Docker Access
 
-The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `docker-compose.docker.yml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable.
+The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `docker-compose.docker.yml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable. The socket path is fixed to `/var/run/docker.sock`.
 
 ## Notes
 
