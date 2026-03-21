@@ -91,11 +91,15 @@ RUN npm install -g "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}"
 RUN npm install -g "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
 
 COPY scripts/entrypoint.sh /usr/local/bin/ai-crowd-entrypoint
+COPY scripts/workbench-healthcheck.sh /usr/local/bin/ai-crowd-healthcheck
 
 RUN chmod 0755 /usr/local/bin/ai-crowd-entrypoint
+RUN chmod 0755 /usr/local/bin/ai-crowd-healthcheck
 
 USER ${USERNAME}
 WORKDIR /workspace/projects
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 CMD ["/usr/local/bin/ai-crowd-healthcheck"]
 
 ENTRYPOINT ["/usr/local/bin/ai-crowd-entrypoint"]
 CMD ["bash", "-l"]

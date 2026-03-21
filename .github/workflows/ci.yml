@@ -17,6 +17,12 @@ jobs:
       - name: Verify shell entrypoint syntax
         run: bash -n scripts/entrypoint.sh
 
+      - name: Verify healthcheck script syntax
+        run: bash -n scripts/workbench-healthcheck.sh
+
+      - name: Verify healthcheck CI helper syntax
+        run: bash -n scripts/ci-healthcheck.sh
+
       - name: Validate base Compose configuration
         run: docker compose -f docker-compose.yml config
 
@@ -30,3 +36,6 @@ jobs:
 
       - name: Smoke test runtime behavior
         run: bash scripts/ci-smoke.sh
+
+      - name: Smoke test healthcheck behavior
+        run: bash scripts/ci-healthcheck.sh
