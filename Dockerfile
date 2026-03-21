@@ -1,0 +1,90 @@
+FROM ubuntu:24.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG NODE_MAJOR=20
+ARG USERNAME=operator
+ARG USER_UID=1000
+ARG USER_GID=1000
+ARG CLAUDE_CODE_PACKAGE=@anthropic-ai/claude-code
+ARG CLAUDE_CODE_VERSION=1.0.43
+ARG GEMINI_CLI_PACKAGE=@google/gemini-cli
+ARG GEMINI_CLI_VERSION=0.1.18
+ARG CODEX_CLI_PACKAGE=@openai/codex
+ARG CODEX_CLI_VERSION=0.26.0
+
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    TZ=UTC \
+    SHELL=/bin/bash \
+    HOME=/home/${USERNAME}
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      apt-transport-https \
+      ca-certificates \
+      curl \
+      gnupg \
+      lsb-release && \
+    mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | \
+      gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+      > /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      bash \
+      zsh \
+      tmux \
+      fzf \
+      git \
+      git-lfs \
+      gh \
+      ripgrep \
+      fd-find \
+      bat \
+      less \
+      tree \
+      jq \
+      yq \
+      gawk \
+      sed \
+      vim \
+      nano \
+      zip \
+      unzip \
+      tar \
+      rsync \
+      wget \
+      dnsutils \
+      iputils-ping \
+      htop \
+      nodejs \
+      python3 \
+      python3-pip \
+      pipx \
+      build-essential \
+      make \
+      pkg-config \
+      openssh-client && \
+    ln -s /usr/bin/fdfind /usr/local/bin/fd && \
+    ln -s /usr/bin/batcat /usr/local/bin/bat && \
+    groupadd --gid "${USER_GID}" "${USERNAME}" && \
+    useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}" && \
+    mkdir -p /workspace/projects /workspace/references /workspace/scratch /var/tmp/ai-crowd && \
+    chown -R "${USERNAME}:${USERNAME}" /home/${USERNAME} /workspace /var/tmp/ai-crowd && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}"
+RUN npm install -g "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}"
+RUN npm install -g "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
+
+COPY scripts/entrypoint.sh /usr/local/bin/ai-crowd-entrypoint
+
+RUN chmod 0755 /usr/local/bin/ai-crowd-entrypoint
+
+USER ${USERNAME}
+WORKDIR /workspace/projects
+
+ENTRYPOINT ["/usr/local/bin/ai-crowd-entrypoint"]
+CMD ["bash", "-l"]

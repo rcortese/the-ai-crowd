@@ -1,0 +1,8 @@
+services:
+  workbench:
+    environment:
+      AI_CROWD_ENABLE_DOCKER: "true"
+    group_add:
+      - "${DOCKER_GID:-998}"
+    volumes:
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
