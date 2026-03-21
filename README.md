@@ -20,9 +20,11 @@ This repository now includes a runnable phase-one scaffold:
 
 1. Copy `.env.example` to `.env`.
 2. Set API keys and adjust UID, GID, and paths for your host.
+   - for Git identity and other shell defaults, prefer files under `./config/` instead of adding more variables to `.env`
 3. Create the local mount targets:
-   - `mkdir -p state/home state/projects state/references state/scratch state/ssh`
+   - `mkdir -p state/home state/projects state/references state/scratch state/ssh config`
    - `chown -R "$(id -u):$(id -g)" state`
+   - `cp config/gitconfig.example config/gitconfig` and edit as needed
 4. Build and start the container:
    - `docker compose up -d --build`
 5. Enter the shell:
@@ -38,6 +40,13 @@ This repository now includes a runnable phase-one scaffold:
 - `/workspace/scratch`: disposable working area
 - `/home/$WORKBENCH_USER`: persistent user state
 
+## Static Config
+
+The workbench now mounts `./config` read-only at `/workspace/config`.
+
+- Use `./config/gitconfig` for persistent Git identity and aliases that should be injected into the container as static configuration.
+- Keep `.env` focused on runtime secrets, UID/GID alignment, and capability toggles.
+
 ## Docker Access
 
 The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `docker-compose.docker.yml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable.
@@ -45,7 +54,6 @@ The base compose stack does not mount `docker.sock`. When you need container ins
 ## Notes
 
 The CLI npm package names and versions are pinned as build args in the image. If upstream package names or auth flows change, update those args rather than mutating a running container by hand. The image also exposes `fd` and `bat` under the expected command names for Ubuntu-based shells.
-Git identity is handled coherently for a shell workbench: `GIT_AUTHOR_*` seeds the shell defaults, the entrypoint mirrors author and committer values when only one side is set, and explicit author/committer pairs are preserved if both are provided.
 The bind-mounted directories under `state/` must be writable by `WORKBENCH_UID:WORKBENCH_GID` from `.env` or startup will fail.
 
 ## Architecture
