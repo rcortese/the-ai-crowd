@@ -25,6 +25,20 @@ check_git_config() {
   [[ "${actual}" == "${expected}" ]] || fail "git config ${key} expected ${expected}, got ${actual:-<unset>}"
 }
 
+check_git_identity_pair() {
+  local author_key="$1"
+  local committer_key="$2"
+  local author_value
+  local committer_value
+
+  author_value="${!author_key:-}"
+  committer_value="${!committer_key:-}"
+
+  if [[ -n "${author_value}" || -n "${committer_value}" ]]; then
+    [[ "${author_value}" == "${committer_value}" ]] || fail "${author_key} and ${committer_key} must match when either is set"
+  fi
+}
+
 home_dir="${HOME:-/home/operator}"
 
 require_dir "${home_dir}"
@@ -40,9 +54,20 @@ require_command claude
 require_command gemini
 require_command codex
 
+check_git_identity_pair GIT_AUTHOR_NAME GIT_COMMITTER_NAME
+check_git_identity_pair GIT_AUTHOR_EMAIL GIT_COMMITTER_EMAIL
+
 check_git_config init.defaultBranch main
 check_git_config pull.rebase false
 check_git_config core.editor vim
+
+if [[ -n "${GIT_AUTHOR_NAME:-}" ]]; then
+  check_git_config user.name "${GIT_AUTHOR_NAME}"
+fi
+
+if [[ -n "${GIT_AUTHOR_EMAIL:-}" ]]; then
+  check_git_config user.email "${GIT_AUTHOR_EMAIL}"
+fi
 
 if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" == "true" ]]; then
   [[ -S /var/run/docker.sock ]] || fail "docker mode enabled but /var/run/docker.sock is not available"

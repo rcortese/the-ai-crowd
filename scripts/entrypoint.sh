@@ -3,6 +3,27 @@ set -euo pipefail
 
 home_dir="${HOME:-/home/operator}"
 
+author_name="${GIT_AUTHOR_NAME:-}"
+author_email="${GIT_AUTHOR_EMAIL:-}"
+committer_name="${GIT_COMMITTER_NAME:-}"
+committer_email="${GIT_COMMITTER_EMAIL:-}"
+
+if [[ -n "${author_name}" && -z "${committer_name}" ]]; then
+  export GIT_COMMITTER_NAME="${author_name}"
+fi
+
+if [[ -n "${author_email}" && -z "${committer_email}" ]]; then
+  export GIT_COMMITTER_EMAIL="${author_email}"
+fi
+
+if [[ -z "${author_name}" && -n "${committer_name}" ]]; then
+  export GIT_AUTHOR_NAME="${committer_name}"
+fi
+
+if [[ -z "${author_email}" && -n "${committer_email}" ]]; then
+  export GIT_AUTHOR_EMAIL="${committer_email}"
+fi
+
 mkdir -p \
   "${home_dir}/.config" \
   "${home_dir}/.cache" \
