@@ -25,7 +25,7 @@ check_git_config() {
   [[ "${actual}" == "${expected}" ]] || fail "git config ${key} expected ${expected}, got ${actual:-<unset>}"
 }
 
-check_git_identity_pair() {
+check_git_identity_presence_pair() {
   local author_key="$1"
   local committer_key="$2"
   local author_value
@@ -34,8 +34,12 @@ check_git_identity_pair() {
   author_value="${!author_key:-}"
   committer_value="${!committer_key:-}"
 
-  if [[ -n "${author_value}" || -n "${committer_value}" ]]; then
-    [[ "${author_value}" == "${committer_value}" ]] || fail "${author_key} and ${committer_key} must match when either is set"
+  if [[ -n "${author_value}" && -z "${committer_value}" ]]; then
+    fail "${committer_key} must be set when ${author_key} is set"
+  fi
+
+  if [[ -z "${author_value}" && -n "${committer_value}" ]]; then
+    fail "${author_key} must be set when ${committer_key} is set"
   fi
 }
 
@@ -54,8 +58,8 @@ require_command claude
 require_command gemini
 require_command codex
 
-check_git_identity_pair GIT_AUTHOR_NAME GIT_COMMITTER_NAME
-check_git_identity_pair GIT_AUTHOR_EMAIL GIT_COMMITTER_EMAIL
+check_git_identity_presence_pair GIT_AUTHOR_NAME GIT_COMMITTER_NAME
+check_git_identity_presence_pair GIT_AUTHOR_EMAIL GIT_COMMITTER_EMAIL
 
 check_git_config init.defaultBranch main
 check_git_config pull.rebase false

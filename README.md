@@ -44,7 +44,7 @@ The base compose stack does not mount `docker.sock`. When you need container ins
 ## Notes
 
 The CLI npm package names and versions are pinned as build args in the image. If upstream package names or auth flows change, update those args rather than mutating a running container by hand. The image also exposes `fd` and `bat` under the expected command names for Ubuntu-based shells.
-Git identity is handled the same way: `GIT_AUTHOR_*` seeds the shell defaults, and the entrypoint mirrors author and committer values when only one side is set.
+Git identity is handled coherently for a shell workbench: `GIT_AUTHOR_*` seeds the shell defaults, the entrypoint mirrors author and committer values when only one side is set, and explicit author/committer pairs are preserved if both are provided.
 
 ## Architecture
 
