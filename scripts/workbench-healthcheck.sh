@@ -32,6 +32,13 @@ check_git_include_path() {
     fail "git config include.path is missing ${include_path}"
 }
 
+check_claude_mcp_registered() {
+  local mcp_name="$1"
+
+  claude mcp list 2>/dev/null | awk -v target="${mcp_name}" '$1 == target { found = 1 } END { exit(found ? 0 : 1) }' ||
+    fail "claude MCP is not registered: ${mcp_name}"
+}
+
 home_dir="${HOME:-/home/operator}"
 gitconfig_path="/workspace/config/gitconfig"
 
@@ -72,6 +79,9 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
 
   node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" 2>/dev/null || \
     fail "gemini MCP bridge syntax error"
+
+  check_claude_mcp_registered codex
+  check_claude_mcp_registered gemini
 fi
 
 printf 'The AI Crowd healthcheck passed.\n'

@@ -29,6 +29,41 @@ ensure_directory /workspace/projects
 ensure_directory /workspace/references
 ensure_directory /workspace/scratch
 
+claude_mcp_list_has() {
+  local mcp_name="$1"
+
+  claude mcp list 2>/dev/null | awk -v target="${mcp_name}" '$1 == target { found = 1 } END { exit(found ? 0 : 1) }'
+}
+
+fail_claude_mcp_bootstrap() {
+  local mcp_name="$1"
+
+  cat >&2 <<EOF
+The AI Crowd could not register the '${mcp_name}' MCP server.
+This prevents delegated Claude workflows from working correctly.
+Check the Claude CLI installation, the claude-delegator files in '${CLAUDE_PLUGIN_ROOT}', and the current user config under '${home_dir}/.claude'.
+EOF
+  exit 70
+}
+
+register_claude_mcp() {
+  local mcp_name="$1"
+  shift
+  local -a mcp_command=("$@")
+
+  if claude_mcp_list_has "${mcp_name}"; then
+    return 0
+  fi
+
+  if ! claude mcp add --transport stdio --scope user "${mcp_name}" -- "${mcp_command[@]}" >/dev/null 2>&1; then
+    fail_claude_mcp_bootstrap "${mcp_name}"
+  fi
+
+  if ! claude_mcp_list_has "${mcp_name}"; then
+    fail_claude_mcp_bootstrap "${mcp_name}"
+  fi
+}
+
 if [[ -d "${home_dir}/.ssh" ]]; then
   if ! chmod 700 "${home_dir}/.ssh" 2>/dev/null; then
     cat >&2 <<EOF
@@ -70,16 +105,18 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]];
   fi
 fi
 
-# claude-delegator: register MCP servers (idempotent)
-if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && command -v claude >/dev/null 2>&1; then
-  if ! claude mcp list 2>/dev/null | grep -q '^codex'; then
-    claude mcp add --transport stdio --scope user codex -- \
-      codex -m gpt-5.3-codex mcp-server 2>/dev/null || true
+# claude-delegator: register MCP servers (idempotent, fail-fast)
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+  if ! command -v claude >/dev/null 2>&1; then
+    cat >&2 <<EOF
+The AI Crowd cannot register delegated MCP servers because the Claude CLI is missing.
+This container image is expected to provide the claude command.
+EOF
+    exit 70
   fi
-  if ! claude mcp list 2>/dev/null | grep -q '^gemini'; then
-    claude mcp add --transport stdio --scope user gemini -- \
-      node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" 2>/dev/null || true
-  fi
+
+  register_claude_mcp codex codex -m gpt-5.3-codex mcp-server
+  register_claude_mcp gemini node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js"
 fi
 
 cat <<'EOF'
