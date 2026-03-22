@@ -103,9 +103,11 @@ ENV CLAUDE_PLUGIN_ROOT=/opt/claude-delegator
 
 COPY scripts/runtime/entrypoint.sh /usr/local/bin/ai-crowd-entrypoint
 COPY scripts/runtime/healthcheck.sh /usr/local/bin/ai-crowd-healthcheck
+COPY scripts/runtime/github.com.known_hosts /etc/ssh/ssh_known_hosts
 
 RUN chmod 0755 /usr/local/bin/ai-crowd-entrypoint
 RUN chmod 0755 /usr/local/bin/ai-crowd-healthcheck
+RUN chmod 0644 /etc/ssh/ssh_known_hosts
 
 USER ${USERNAME}
 WORKDIR /workspace/projects

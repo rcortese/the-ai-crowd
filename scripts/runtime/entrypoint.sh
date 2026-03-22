@@ -7,7 +7,6 @@ runtime_gid="$(id -g)"
 config_dir="/workspace/config"
 gitconfig_path="${config_dir}/gitconfig"
 ssh_dir="${home_dir}/.ssh"
-known_hosts_path="${ssh_dir}/known_hosts"
 claude_config_path="${home_dir}/.claude.json"
 claude_config_backup_path="${home_dir}/.claude.json.backup"
 ai_crowd_state_dir="${home_dir}/.local/share/ai-crowd"
@@ -125,24 +124,6 @@ register_claude_mcp() {
   return 0
 }
 
-ensure_github_known_host() {
-  local github_host="github.com"
-
-  touch "${known_hosts_path}"
-  chmod 644 "${known_hosts_path}"
-
-  if ssh-keygen -F "${github_host}" -f "${known_hosts_path}" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  if ! ssh-keyscan -H "${github_host}" >> "${known_hosts_path}" 2>/dev/null; then
-    cat >&2 <<EOF
-The AI Crowd could not pre-populate SSH known_hosts for '${github_host}'.
-SSH Git workflows remain available, but the first connection may prompt for host verification.
-EOF
-  fi
-}
-
 if [[ -d "${ssh_dir}" ]]; then
   if ! chmod 700 "${ssh_dir}" 2>/dev/null; then
     cat >&2 <<EOF
@@ -153,7 +134,6 @@ EOF
   fi
   find "${ssh_dir}" -type f \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 644 {} +
   find "${ssh_dir}" -type f ! \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 600 {} +
-  ensure_github_known_host
 fi
 
 if [[ -f "${gitconfig_path}" ]] && ! git config --global --get-all include.path | grep -Fx "${gitconfig_path}" >/dev/null; then
