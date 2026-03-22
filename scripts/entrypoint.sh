@@ -61,6 +61,27 @@ if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" != "true" ]]; then
   export DOCKER_HOST=""
 fi
 
+# claude-delegator: copy orchestration rules on first boot
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]]; then
+  delegator_rules_dst="${home_dir}/.claude/rules/delegator"
+  if [[ ! -d "${delegator_rules_dst}" ]]; then
+    mkdir -p "${delegator_rules_dst}"
+    cp "${CLAUDE_PLUGIN_ROOT}/rules/"*.md "${delegator_rules_dst}/"
+  fi
+fi
+
+# claude-delegator: register MCP servers (idempotent)
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && command -v claude >/dev/null 2>&1; then
+  if ! claude mcp list 2>/dev/null | grep -q '^codex'; then
+    claude mcp add --transport stdio --scope user codex -- \
+      codex -m gpt-5.3-codex mcp-server 2>/dev/null || true
+  fi
+  if ! claude mcp list 2>/dev/null | grep -q '^gemini'; then
+    claude mcp add --transport stdio --scope user gemini -- \
+      node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" 2>/dev/null || true
+  fi
+fi
+
 cat <<'EOF'
 The AI Crowd workbench is ready.
 Projects:   /workspace/projects

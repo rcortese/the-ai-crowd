@@ -62,4 +62,16 @@ else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"
 fi
 
+# claude-delegator: rules installed and gemini bridge present
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+  [[ -f "${home_dir}/.claude/rules/delegator/orchestration.md" ]] || \
+    fail "claude-delegator rules not installed"
+
+  [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]] || \
+    fail "gemini MCP bridge missing"
+
+  node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" 2>/dev/null || \
+    fail "gemini MCP bridge syntax error"
+fi
+
 printf 'The AI Crowd healthcheck passed.\n'

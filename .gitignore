@@ -3,3 +3,4 @@ config/gitconfig
 state/
 tmp/
 CLAUDE.md
+.claude/

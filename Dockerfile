@@ -11,6 +11,7 @@ ARG GEMINI_CLI_PACKAGE=@google/gemini-cli
 ARG GEMINI_CLI_VERSION=0.1.18
 ARG CODEX_CLI_PACKAGE=@openai/codex
 ARG CODEX_CLI_VERSION=0.26.0
+ARG CLAUDE_DELEGATOR_COMMIT=6c3535b642ce8ea352f7fac85d063f6b6d62253f
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
@@ -89,6 +90,13 @@ RUN apt-get update && \
 RUN npm install -g "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}"
 RUN npm install -g "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}"
 RUN npm install -g "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
+
+RUN git clone https://github.com/jarrodwatts/claude-delegator.git /opt/claude-delegator \
+    && git -C /opt/claude-delegator checkout "${CLAUDE_DELEGATOR_COMMIT}" \
+    && rm -rf /opt/claude-delegator/.git \
+    && chown -R "${USER_UID}:${USER_GID}" /opt/claude-delegator
+
+ENV CLAUDE_PLUGIN_ROOT=/opt/claude-delegator
 
 COPY scripts/entrypoint.sh /usr/local/bin/ai-crowd-entrypoint
 COPY scripts/workbench-healthcheck.sh /usr/local/bin/ai-crowd-healthcheck

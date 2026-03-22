@@ -52,6 +52,41 @@ The workbench now mounts `./config` read-only at `/workspace/config`.
 
 The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `docker-compose.docker.yml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable. The socket path is fixed to `/var/run/docker.sock`.
 
+## Authentication
+
+Each CLI supports two auth modes. API keys are injected via `.env`; OAuth tokens are stored in `$HOME/.config/` and persist across container restarts via the `state/home` bind mount.
+
+| CLI | OAuth (browser) | API key |
+|-----|----------------|---------|
+| **Claude Code** | `claude auth login` | `ANTHROPIC_API_KEY` in `.env` |
+| **Gemini CLI** | `gemini auth` | `GEMINI_API_KEY` in `.env` |
+| **Codex CLI** | `codex` → Sign in with ChatGPT | `OPENAI_API_KEY` in `.env` |
+
+For headless or CI environments, API keys are the only viable path. For interactive use, OAuth is the simpler setup — no key management required.
+
+### First-time OAuth setup
+
+```bash
+docker exec -it the-ai-crowd bash -l
+claude auth login   # opens browser
+gemini auth         # opens browser
+codex               # select "Sign in with ChatGPT"
+```
+
+Tokens are written to `state/home/.config/{claude,gemini,codex}/`. Subsequent `docker compose up -d` invocations reuse them automatically.
+
+### Mixing modes
+
+You can mix modes across CLIs — e.g. API key for Claude, OAuth for Gemini. Set whichever keys you have in `.env` and leave the rest blank; authenticate the remainder interactively on first run.
+
+## Dependencies
+
+| Dependency | Purpose |
+|------------|---------|
+| [jarrodwatts/claude-delegator](https://github.com/jarrodwatts/claude-delegator) | MCP bridge for Gemini CLI and orchestration rules for multi-model delegation |
+
+The image clones claude-delegator at build time and pins it to a specific commit for reproducibility. The Gemini MCP bridge (`server/gemini/index.js`) and orchestration rules (`rules/*.md`) are the components used at runtime.
+
 ## Notes
 
 The CLI npm package names and versions are pinned as build args in the image. If upstream package names or auth flows change, update those args rather than mutating a running container by hand. The image also exposes `fd` and `bat` under the expected command names for Ubuntu-based shells.
