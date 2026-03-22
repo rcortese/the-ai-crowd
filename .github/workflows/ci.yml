@@ -15,27 +15,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify shell entrypoint syntax
-        run: bash -n scripts/entrypoint.sh
+        run: bash -n scripts/runtime/entrypoint.sh
 
       - name: Verify healthcheck script syntax
-        run: bash -n scripts/workbench-healthcheck.sh
+        run: bash -n scripts/runtime/workbench-healthcheck.sh
 
       - name: Verify healthcheck CI helper syntax
-        run: bash -n scripts/ci-healthcheck.sh
+        run: bash -n scripts/ci/healthcheck.sh
 
       - name: Validate base Compose configuration
-        run: docker compose -f docker-compose.yml config
+        run: docker compose -f compose.yaml config
 
       - name: Validate Docker-aware Compose configuration
         env:
           DOCKER_GID: "998"
-        run: docker compose -f docker-compose.yml -f docker-compose.docker.yml config
+        run: docker compose -f compose.yaml -f compose.docker.yaml config
 
       - name: Build image
-        run: docker compose -f docker-compose.yml build the-ai-crowd
+        run: docker compose -f compose.yaml build the-ai-crowd
 
       - name: Smoke test runtime and delegation behavior
-        run: bash scripts/ci-smoke.sh
+        run: bash scripts/ci/smoke.sh
 
       - name: Smoke test healthcheck behavior
-        run: bash scripts/ci-healthcheck.sh
+        run: bash scripts/ci/healthcheck.sh

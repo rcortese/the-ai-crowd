@@ -19,7 +19,8 @@ export WORKBENCH_UID="$(id -u)"
 export WORKBENCH_GID="$(id -g)"
 
 mkdir -p "${temp_repo}"
-cp docker-compose.yml docker-compose.docker.yml Dockerfile README.md ARCHITECTURE.md GUIDELINES.md "${temp_repo}/"
+cp compose.yaml compose.docker.yaml Dockerfile README.md "${temp_repo}/"
+cp -r docs "${temp_repo}/"
 cp -r scripts config .dockerignore .gitignore .github "${temp_repo}/"
 mkdir -p \
   "${temp_repo}/state/home" \
@@ -42,13 +43,13 @@ services:
 EOF
 
 compose_base=(
-  -f docker-compose.yml
+  -f compose.yaml
   -f docker-compose.ci.override.yml
 )
 
 compose_docker=(
-  -f docker-compose.yml
-  -f docker-compose.docker.yml
+  -f compose.yaml
+  -f compose.docker.yaml
   -f docker-compose.ci.override.yml
 )
 

@@ -11,7 +11,7 @@ The AI Crowd is a single internal toolbox container where Claude acts as the pri
 This repository now includes a runnable phase-one scaffold:
 
 - `Dockerfile` for an Ubuntu 24.04-based workbench image
-- `docker-compose.yml` for a persistent, terminal-first runtime
+- `compose.yaml` for a persistent, terminal-first runtime
 - pinned build args for Node 20 and the three AI CLIs
 - curated mounts for projects, references, scratch space, and persistent home
 - a non-root entrypoint that initializes operator state cleanly
@@ -32,7 +32,7 @@ This repository now includes a runnable phase-one scaffold:
 5. Enter the shell:
    - `docker exec -it the-ai-crowd bash -l`
 6. Enable Docker-aware mode only when needed:
-   - `docker compose -f docker-compose.yml -f docker-compose.docker.yml up -d`
+   - `docker compose -f compose.yaml -f compose.docker.yaml up -d`
    - set `DOCKER_GID` in `.env` to the host group that owns `docker.sock`
 
 ## Filesystem Model
@@ -52,7 +52,7 @@ The workbench now mounts `./config` read-only at `/workspace/config`.
 
 ## Docker Access
 
-The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `docker-compose.docker.yml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable. The socket path is fixed to `/var/run/docker.sock`.
+The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `compose.docker.yaml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable. The socket path is fixed to `/var/run/docker.sock`.
 
 ## Authentication
 
@@ -96,4 +96,4 @@ The bind-mounted directories under `state/` must be writable by `WORKBENCH_UID:W
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) and [GUIDELINES.md](GUIDELINES.md).
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/GUIDELINES.md](docs/GUIDELINES.md).

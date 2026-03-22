@@ -101,8 +101,8 @@ RUN mkdir -p /opt/claude-delegator \
 
 ENV CLAUDE_PLUGIN_ROOT=/opt/claude-delegator
 
-COPY scripts/entrypoint.sh /usr/local/bin/ai-crowd-entrypoint
-COPY scripts/workbench-healthcheck.sh /usr/local/bin/ai-crowd-healthcheck
+COPY scripts/runtime/entrypoint.sh /usr/local/bin/ai-crowd-entrypoint
+COPY scripts/runtime/workbench-healthcheck.sh /usr/local/bin/ai-crowd-healthcheck
 
 RUN chmod 0755 /usr/local/bin/ai-crowd-entrypoint
 RUN chmod 0755 /usr/local/bin/ai-crowd-healthcheck
