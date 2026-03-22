@@ -6,6 +6,10 @@ fail() {
   exit 1
 }
 
+warn() {
+  printf 'The AI Crowd healthcheck warning: %s\n' "$*" >&2
+}
+
 require_dir() {
   local path="$1"
   [[ -d "${path}" ]] || fail "missing directory: ${path}"
@@ -36,11 +40,13 @@ check_claude_mcp_registered() {
   local mcp_name="$1"
 
   jq -e --arg mcp_name "${mcp_name}" '.mcpServers[$mcp_name] != null' "${home_dir}/.claude.json" >/dev/null 2>&1 ||
-    fail "claude MCP is not registered: ${mcp_name}"
+    return 1
 }
 
 home_dir="${HOME:-/home/operator}"
 gitconfig_path="/workspace/config/gitconfig"
+ai_crowd_state_dir="${home_dir}/.local/share/ai-crowd"
+claude_mcp_status_path="${ai_crowd_state_dir}/claude-mcp-bootstrap.status"
 
 require_dir "${home_dir}"
 require_dir "${home_dir}/.config"
@@ -69,19 +75,32 @@ else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"
 fi
 
-# claude-delegator: rules installed and gemini bridge present
+# claude-delegator: rules and MCP registration are best-effort.
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
-  [[ -f "${home_dir}/.claude/rules/delegator/orchestration.md" ]] || \
-    fail "claude-delegator rules not installed"
+  if [[ ! -f "${home_dir}/.claude/rules/delegator/orchestration.md" ]]; then
+    warn "claude-delegator rules not installed"
+  fi
 
-  [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]] || \
-    fail "gemini MCP bridge missing"
+  if [[ ! -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]; then
+    warn "gemini MCP bridge missing"
+  elif ! node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" >/dev/null 2>&1; then
+    warn "gemini MCP bridge syntax error"
+  fi
 
-  node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" 2>/dev/null || \
-    fail "gemini MCP bridge syntax error"
+  if ! check_claude_mcp_registered codex; then
+    warn "claude MCP is not registered: codex"
+  fi
 
-  check_claude_mcp_registered codex
-  check_claude_mcp_registered gemini
+  if ! check_claude_mcp_registered gemini; then
+    warn "claude MCP is not registered: gemini"
+  fi
+fi
+
+if [[ -s "${claude_mcp_status_path}" ]]; then
+  while IFS= read -r warning_message; do
+    [[ -n "${warning_message}" ]] || continue
+    warn "${warning_message}"
+  done < "${claude_mcp_status_path}"
 fi
 
 printf 'The AI Crowd healthcheck passed.\n'

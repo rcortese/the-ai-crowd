@@ -10,6 +10,8 @@ ssh_dir="${home_dir}/.ssh"
 known_hosts_path="${ssh_dir}/known_hosts"
 claude_config_path="${home_dir}/.claude.json"
 claude_config_backup_path="${home_dir}/.claude.json.backup"
+ai_crowd_state_dir="${home_dir}/.local/share/ai-crowd"
+claude_mcp_status_path="${ai_crowd_state_dir}/claude-mcp-bootstrap.status"
 
 ensure_directory() {
   local dir_path="$1"
@@ -29,6 +31,7 @@ EOF
 ensure_directory "${home_dir}/.config"
 ensure_directory "${home_dir}/.cache"
 ensure_directory "${home_dir}/.local/share"
+ensure_directory "${ai_crowd_state_dir}"
 ensure_directory "${ssh_dir}"
 ensure_directory /workspace/projects
 ensure_directory /workspace/references
@@ -82,15 +85,19 @@ write_claude_mcp_config() {
   mv "${tmp_config}" "${claude_config_path}"
 }
 
-fail_claude_mcp_bootstrap() {
-  local mcp_name="$1"
+reset_claude_mcp_status() {
+  : > "${claude_mcp_status_path}"
+}
 
-  cat >&2 <<EOF
-The AI Crowd could not register the '${mcp_name}' MCP server.
-This prevents delegated Claude workflows from working correctly.
-Check the Claude CLI installation, the claude-delegator files in '${CLAUDE_PLUGIN_ROOT}', and the current user config under '${home_dir}/.claude'.
-EOF
-  exit 70
+record_claude_mcp_status() {
+  printf '%s\n' "$1" >> "${claude_mcp_status_path}"
+}
+
+warn_claude_mcp_bootstrap() {
+  local issue="$1"
+
+  record_claude_mcp_status "${issue}"
+  printf 'WARNING: %s\n' "${issue}" >&2
 }
 
 register_claude_mcp() {
@@ -104,14 +111,18 @@ register_claude_mcp() {
   fi
 
   if ! bootstrap_claude_config; then
-    fail_claude_mcp_bootstrap "${mcp_name}"
+    warn_claude_mcp_bootstrap "The AI Crowd could not bootstrap Claude config for MCP '${mcp_name}'. Delegated Claude workflows are unavailable, but shell access and direct CLI usage remain available."
+    return 1
   fi
 
   write_claude_mcp_config "${mcp_name}" "${command_name}" "${command_args[@]}"
 
   if ! claude_config_has_mcp "${mcp_name}"; then
-    fail_claude_mcp_bootstrap "${mcp_name}"
+    warn_claude_mcp_bootstrap "The AI Crowd could not register MCP '${mcp_name}' in '${claude_config_path}'. Delegated Claude workflows are unavailable, but shell access and direct CLI usage remain available."
+    return 1
   fi
+
+  return 0
 }
 
 ensure_github_known_host() {
@@ -174,18 +185,15 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]];
   fi
 fi
 
-# claude-delegator: register MCP servers (idempotent, fail-fast)
+# claude-delegator: register MCP servers (idempotent, non-fatal)
+reset_claude_mcp_status
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if ! command -v claude >/dev/null 2>&1; then
-    cat >&2 <<EOF
-The AI Crowd cannot register delegated MCP servers because the Claude CLI is missing.
-This image is expected to provide the claude command.
-EOF
-    exit 70
+    warn_claude_mcp_bootstrap "The AI Crowd could not register delegated MCP servers because the Claude CLI is missing. Delegated Claude workflows and Claude CLI usage are unavailable, but shell access and direct Gemini/Codex CLI usage remain available."
+  else
+    register_claude_mcp codex codex -m gpt-5.3-codex mcp-server || true
+    register_claude_mcp gemini node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" || true
   fi
-
-  register_claude_mcp codex codex -m gpt-5.3-codex mcp-server
-  register_claude_mcp gemini node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js"
 fi
 
 cat <<'EOF'

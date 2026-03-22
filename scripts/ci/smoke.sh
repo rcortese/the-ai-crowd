@@ -127,6 +127,13 @@ docker compose "${compose_files[@]}" exec -T \
   command -v gemini >/dev/null
   command -v codex >/dev/null
 
+  [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]]
+  [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]
+  node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" >/dev/null 2>&1
+
+  run_cli_check "claude --version" "claude --help"
+  run_cli_check "codex --version" "codex --help"
+
   check_claude_mcp_registered() {
     local mcp_name="$1"
 
@@ -136,8 +143,8 @@ docker compose "${compose_files[@]}" exec -T \
   check_claude_mcp_registered codex
   check_claude_mcp_registered gemini
 
-  run_cli_check "claude --version" "claude --help"
-  run_cli_check "codex --version" "codex --help"
+  status_file="${HOME}/.local/share/ai-crowd/claude-mcp-bootstrap.status"
+  [[ ! -s "${status_file}" ]]
 '
 
 run_exec_cli_check \

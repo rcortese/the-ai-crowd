@@ -78,6 +78,8 @@ Use SSH as the default interactive Git path.
 
 The container bootstraps `~/.ssh` permissions and attempts to pre-populate `github.com` in `known_hosts`.
 
+On startup it also attempts to register Claude MCP entries for delegated Gemini/Codex workflows. If that MCP bootstrap fails, the container still comes up for shell access and direct CLI use, and the warning is recorded under `state/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`.
+
 If you prefer GitHub CLI login:
 
 ```bash
