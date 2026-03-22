@@ -19,7 +19,9 @@ ENV LANG=C.UTF-8 \
     SHELL=/bin/bash \
     HOME=/home/${USERNAME}
 
-RUN apt-get update && \
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get -o Acquire::Retries=3 update && \
     apt-get install -y --no-install-recommends \
       apt-transport-https \
       ca-certificates \
@@ -91,9 +93,10 @@ RUN npm install -g "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}"
 RUN npm install -g "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}"
 RUN npm install -g "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
 
-RUN git clone https://github.com/jarrodwatts/claude-delegator.git /opt/claude-delegator \
-    && git -C /opt/claude-delegator checkout "${CLAUDE_DELEGATOR_COMMIT}" \
-    && rm -rf /opt/claude-delegator/.git \
+RUN mkdir -p /opt/claude-delegator \
+    && curl -fsSL --retry 5 --retry-all-errors --connect-timeout 10 \
+      "https://codeload.github.com/jarrodwatts/claude-delegator/tar.gz/${CLAUDE_DELEGATOR_COMMIT}" \
+      | tar -xz -C /opt/claude-delegator --strip-components=1 \
     && chown -R "${USER_UID}:${USER_GID}" /opt/claude-delegator
 
 ENV CLAUDE_PLUGIN_ROOT=/opt/claude-delegator
