@@ -34,7 +34,7 @@ jobs:
       - name: Build image
         run: docker compose -f docker-compose.yml build the-ai-crowd
 
-      - name: Smoke test runtime behavior
+      - name: Smoke test runtime and delegation behavior
         run: bash scripts/ci-smoke.sh
 
       - name: Smoke test healthcheck behavior

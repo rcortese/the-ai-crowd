@@ -145,6 +145,15 @@ docker compose "${compose_files[@]}" exec -T \
   command -v gemini >/dev/null
   command -v codex >/dev/null
 
+  check_claude_mcp_registered() {
+    local mcp_name="$1"
+
+    claude mcp list 2>/dev/null | awk -v target="${mcp_name}" "\$1 == target { found = 1 } END { exit(found ? 0 : 1) }"
+  }
+
+  check_claude_mcp_registered codex
+  check_claude_mcp_registered gemini
+
   run_cli_check "claude --version" "claude --help"
   run_cli_check "codex --version" "codex --help"
 '
