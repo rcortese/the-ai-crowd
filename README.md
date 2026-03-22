@@ -23,10 +23,12 @@ This repository now includes a runnable phase-one scaffold:
    - OAuth is the default operator path for interactive use
    - API keys remain available for headless, CI, or explicit preference
    - for Git identity and other shell defaults, prefer files under `./config/` instead of adding more variables to `.env`
+   - Git authentication should use SSH by default; do not put Git credentials in `.env`, `./config`, or text files in the repo
 3. Create the local mount targets:
    - `mkdir -p state/home state/projects state/references state/scratch state/ssh config`
    - `chown -R "$(id -u):$(id -g)" state`
    - `cp config/gitconfig.example config/gitconfig` and edit as needed
+   - place your SSH keypair under `state/ssh` if you want the default Git workflow
 4. Build and start the container:
    - `docker compose up -d --build`
 5. Enter the shell:
@@ -49,6 +51,27 @@ The workbench now mounts `./config` read-only at `/workspace/config`.
 - Use `./config/gitconfig` for persistent Git identity and aliases that should be injected into the container as static configuration.
 - The standard host layout is fixed in compose: `./state/{home,projects,references,scratch,ssh}` plus `./config`.
 - Keep `.env` focused on runtime secrets, UID/GID alignment, tool versions, and capability toggles.
+- Never store Git credentials in `./config`, `.env`, `.env.example`, or ad-hoc text files in the repository.
+
+## Git Authentication
+
+Use SSH as the default interactive Git path.
+
+1. Put your SSH keypair in `state/ssh`.
+2. Start the workbench.
+3. Inside the container, verify access with `ssh -T git@github.com`.
+4. Use Git remotes in SSH form such as `git@github.com:org/repo.git`.
+
+The container bootstraps `~/.ssh` permissions and pre-populates `github.com` in `known_hosts` when possible, so the standard SSH path works with minimal setup.
+
+If you prefer GitHub CLI login instead of SSH, use an explicit interactive flow inside the container:
+
+```bash
+gh auth login
+gh auth setup-git
+```
+
+This stores GitHub authentication under the persistent home mount in `state/home`, not in repository-managed config.
 
 ## Docker Access
 
@@ -80,6 +103,8 @@ Tokens are written to `state/home/.config/{claude,gemini,codex}/`. Subsequent `d
 ### Mixing modes
 
 You can mix modes across CLIs. The default recommendation is OAuth for interactive workflows, with API keys used selectively where automation, headless operation, or local key management are the better fit.
+
+For Git automation or CI, inject tokens through a secret file or an env file stored outside this repository. Do not persist Git credentials in project files.
 
 ## Dependencies
 

@@ -2,6 +2,10 @@
 	name = Your Name
 	email = you@example.com
 
+# Static Git preferences only.
+# Do not store tokens, passwords, or other credentials in this file.
+# Use SSH by default, or run `gh auth login` inside the container if needed.
+
 [init]
 	defaultBranch = main
 
