@@ -48,15 +48,21 @@ The image is the product. The running container is not allowed to mutate its cor
 
 ### 3. Authentication model
 
-Authentication will be **container-friendly and headless-first**.
+Authentication will be **container-friendly with OAuth as the primary interactive path**.
 
-The default model is:
+The default interactive model is:
+
+- **Claude Code**: browser login
+- **Gemini CLI**: browser login
+- **Codex CLI**: browser login
+
+The default non-interactive model is:
 
 - **Anthropic API key** for Claude Code
 - **Gemini API key** for Gemini CLI
 - **OpenAI API key** for Codex CLI
 
-Browser login is not the primary path. It is the fallback path only when a specific CLI feature genuinely requires it.
+Browser login is the primary operator path. API keys remain the secondary path for headless use, CI, or cases where browser login is not desirable.
 
 Secrets do **not** belong in the image. They are injected at runtime and their cached state lives in persistent user storage.
 
@@ -214,7 +220,7 @@ The day-one toolchain will include:
 - **data tools**: jq, yq, awk, sed
 - **editors**: vim, nano
 - **archive and sync tools**: zip, unzip, tar, rsync
-- **network and diagnostics**: curl, wget, dig or equivalent DNS tools, ping, htop
+- **network and diagnostics**: curl, wget, dig or equivalent DNS tools, htop
 - **language/runtime baseline**: Node.js 20 LTS, Python 3, pipx
 - **build baseline**: build-essential, make, pkg-config, and common compilation support
 - **session tooling**: tmux

@@ -19,7 +19,9 @@ This repository now includes a runnable phase-one scaffold:
 ## Quick Start
 
 1. Copy `.env.example` to `.env`.
-2. Set API keys and adjust UID/GID for your host.
+2. Adjust UID/GID for your host and decide how you want to authenticate.
+   - OAuth is the default operator path for interactive use
+   - API keys remain available for headless, CI, or explicit preference
    - for Git identity and other shell defaults, prefer files under `./config/` instead of adding more variables to `.env`
 3. Create the local mount targets:
    - `mkdir -p state/home state/projects state/references state/scratch state/ssh config`
@@ -54,7 +56,7 @@ The base compose stack does not mount `docker.sock`. When you need container ins
 
 ## Authentication
 
-Each CLI supports two auth modes. API keys are injected via `.env`; OAuth tokens are stored in `$HOME/.config/` and persist across container restarts via the `state/home` bind mount.
+Each CLI supports two auth modes. OAuth is the default operator path for interactive use. API keys are injected via `.env` and remain available for headless, CI, and cases where browser-based login is not the right fit. OAuth tokens are stored in `$HOME/.config/` and persist across container restarts via the `state/home` bind mount.
 
 | CLI | OAuth (browser) | API key |
 |-----|----------------|---------|
@@ -62,7 +64,7 @@ Each CLI supports two auth modes. API keys are injected via `.env`; OAuth tokens
 | **Gemini CLI** | `gemini auth` | `GEMINI_API_KEY` in `.env` |
 | **Codex CLI** | `codex` → Sign in with ChatGPT | `OPENAI_API_KEY` in `.env` |
 
-For headless or CI environments, API keys are the only viable path. For interactive use, OAuth is the simpler setup — no key management required.
+For interactive sessions, OAuth is the default recommendation. For headless or CI environments, API keys are the practical path.
 
 ### First-time OAuth setup
 
@@ -77,7 +79,7 @@ Tokens are written to `state/home/.config/{claude,gemini,codex}/`. Subsequent `d
 
 ### Mixing modes
 
-You can mix modes across CLIs — e.g. API key for Claude, OAuth for Gemini. Set whichever keys you have in `.env` and leave the rest blank; authenticate the remainder interactively on first run.
+You can mix modes across CLIs. The default recommendation is OAuth for interactive workflows, with API keys used selectively where automation, headless operation, or local key management are the better fit.
 
 ## Dependencies
 
@@ -85,7 +87,7 @@ You can mix modes across CLIs — e.g. API key for Claude, OAuth for Gemini. Set
 |------------|---------|
 | [jarrodwatts/claude-delegator](https://github.com/jarrodwatts/claude-delegator) | MCP bridge for Gemini CLI and orchestration rules for multi-model delegation |
 
-The image clones claude-delegator at build time and pins it to a specific commit for reproducibility. The Gemini MCP bridge (`server/gemini/index.js`) and orchestration rules (`rules/*.md`) are the components used at runtime.
+The image downloads a pinned `claude-delegator` snapshot from upstream at build time using the configured commit, then extracts only the contents needed at runtime. The Gemini MCP bridge (`server/gemini/index.js`) and orchestration rules (`rules/*.md`) are the components used at runtime.
 
 ## Notes
 
