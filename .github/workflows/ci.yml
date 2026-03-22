@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  validate:
+  ci:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -17,28 +17,28 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify shell entrypoint syntax
+      - name: Verify runtime entrypoint script syntax
         run: bash -n scripts/runtime/entrypoint.sh
 
-      - name: Verify healthcheck script syntax
+      - name: Verify runtime healthcheck script syntax
         run: bash -n scripts/runtime/healthcheck.sh
 
-      - name: Verify healthcheck CI helper syntax
+      - name: Verify CI healthcheck script syntax
         run: bash -n scripts/ci/healthcheck.sh
 
       - name: Validate base Compose configuration
         run: docker compose -f compose.yaml config
 
-      - name: Validate Docker-aware Compose configuration
+      - name: Validate Docker Compose override configuration
         env:
           DOCKER_GID: "998"
         run: docker compose -f compose.yaml -f compose.docker.yaml config
 
-      - name: Build image
+      - name: Build Docker image
         run: docker compose -f compose.yaml build the-ai-crowd
 
-      - name: Smoke test runtime and delegation behavior
+      - name: Run runtime and delegation smoke tests
         run: bash scripts/ci/smoke.sh
 
-      - name: Smoke test healthcheck behavior
+      - name: Run healthcheck smoke tests
         run: bash scripts/ci/healthcheck.sh

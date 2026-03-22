@@ -1,4 +1,4 @@
-name: Publish Docker Image
+name: Release
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - "v*"
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract Docker metadata
+      - name: Extract Docker image metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -36,7 +36,7 @@ jobs:
             type=ref,event=tag
             type=sha,prefix=sha-
 
-      - name: Build and push image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
