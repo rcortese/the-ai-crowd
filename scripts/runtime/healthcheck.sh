@@ -35,7 +35,7 @@ check_git_include_path() {
 check_claude_mcp_registered() {
   local mcp_name="$1"
 
-  claude mcp list 2>/dev/null | awk -v target="${mcp_name}" '$1 == target { found = 1 } END { exit(found ? 0 : 1) }' ||
+  jq -e --arg mcp_name "${mcp_name}" '.mcpServers[$mcp_name] != null' "${home_dir}/.claude.json" >/dev/null 2>&1 ||
     fail "claude MCP is not registered: ${mcp_name}"
 }
 

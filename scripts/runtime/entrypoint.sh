@@ -6,6 +6,8 @@ workbench_uid="$(id -u)"
 workbench_gid="$(id -g)"
 config_dir="/workspace/config"
 gitconfig_path="${config_dir}/gitconfig"
+claude_config_path="${home_dir}/.claude.json"
+claude_config_backup_path="${home_dir}/.claude.json.backup"
 
 ensure_directory() {
   local dir_path="$1"
@@ -29,10 +31,52 @@ ensure_directory /workspace/projects
 ensure_directory /workspace/references
 ensure_directory /workspace/scratch
 
-claude_mcp_list_has() {
+claude_config_has_mcp() {
   local mcp_name="$1"
 
-  claude mcp list 2>/dev/null | awk -v target="${mcp_name}" '$1 == target { found = 1 } END { exit(found ? 0 : 1) }'
+  jq -e --arg mcp_name "${mcp_name}" '.mcpServers[$mcp_name] != null' "${claude_config_path}" >/dev/null 2>&1
+}
+
+bootstrap_claude_config() {
+  mkdir -p "${home_dir}"
+
+  if [[ -s "${claude_config_path}" ]] && jq -e . "${claude_config_path}" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -s "${claude_config_backup_path}" ]] && jq -e . "${claude_config_backup_path}" >/dev/null 2>&1; then
+    cp "${claude_config_backup_path}" "${claude_config_path}"
+    return 0
+  fi
+
+  rm -f "${claude_config_path}"
+  if ! timeout 15 claude --version >/dev/null 2>&1; then
+    return 1
+  fi
+
+  [[ -s "${claude_config_path}" ]] && jq -e . "${claude_config_path}" >/dev/null 2>&1
+}
+
+write_claude_mcp_config() {
+  local mcp_name="$1"
+  local command_name="$2"
+  shift 2
+  local tmp_config
+
+  tmp_config="$(mktemp)"
+  jq \
+    --arg mcp_name "${mcp_name}" \
+    --arg command_name "${command_name}" \
+    --argjson args "$(printf '%s\n' "$@" | jq -R . | jq -s .)" \
+    '.mcpServers = (.mcpServers // {}) |
+     .mcpServers[$mcp_name] = {
+       type: "stdio",
+       command: $command_name,
+       args: $args,
+       env: {}
+     }' \
+    "${claude_config_path}" > "${tmp_config}"
+  mv "${tmp_config}" "${claude_config_path}"
 }
 
 fail_claude_mcp_bootstrap() {
@@ -48,18 +92,21 @@ EOF
 
 register_claude_mcp() {
   local mcp_name="$1"
-  shift
-  local -a mcp_command=("$@")
+  local command_name="$2"
+  shift 2
+  local -a command_args=("$@")
 
-  if claude_mcp_list_has "${mcp_name}"; then
+  if claude_config_has_mcp "${mcp_name}"; then
     return 0
   fi
 
-  if ! claude mcp add --transport stdio --scope user "${mcp_name}" -- "${mcp_command[@]}" >/dev/null 2>&1; then
+  if ! bootstrap_claude_config; then
     fail_claude_mcp_bootstrap "${mcp_name}"
   fi
 
-  if ! claude_mcp_list_has "${mcp_name}"; then
+  write_claude_mcp_config "${mcp_name}" "${command_name}" "${command_args[@]}"
+
+  if ! claude_config_has_mcp "${mcp_name}"; then
     fail_claude_mcp_bootstrap "${mcp_name}"
   fi
 }

@@ -68,17 +68,17 @@ container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 
 docker inspect -f '{{.State.Running}}' "${container_id}" | grep -qx true
 
-wait_for_exec_ready() {
+wait_for_workbench_ready() {
   local attempts=0
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" true >/dev/null 2>&1; then
+    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck >/dev/null 2>&1; then
       return 0
     fi
 
     attempts=$((attempts + 1))
     if (( attempts > 30 )); then
-      printf 'Timed out waiting for %s exec readiness.\n' "${service}" >&2
+      printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
       docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
       return 1
     fi
@@ -87,7 +87,7 @@ wait_for_exec_ready() {
   done
 }
 
-wait_for_exec_ready
+wait_for_workbench_ready
 
 run_exec_cli_check() {
   local version_cmd="$1"
@@ -149,7 +149,7 @@ docker compose "${compose_files[@]}" exec -T \
   check_claude_mcp_registered() {
     local mcp_name="$1"
 
-    claude mcp list 2>/dev/null | awk -v target="${mcp_name}" "\$1 == target { found = 1 } END { exit(found ? 0 : 1) }"
+    jq -e --arg mcp_name "${mcp_name}" ".mcpServers[\$mcp_name] != null" "${HOME}/.claude.json" >/dev/null 2>&1
   }
 
   check_claude_mcp_registered codex

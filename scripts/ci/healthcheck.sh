@@ -90,36 +90,36 @@ wait_for_cleanup() {
   done
 }
 
-run_healthcheck() {
-  local -a compose_files=("$@")
-
-  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
-  wait_for_cleanup
-  docker compose "${compose_files[@]}" up -d --no-build "${service}"
-  wait_for_exec_ready "${compose_files[@]}"
-  docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
-  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
-  wait_for_cleanup
-}
-
-wait_for_exec_ready() {
+wait_for_workbench_ready() {
   local -a compose_files=("$@")
   local attempts=0
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" true >/dev/null 2>&1; then
+    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck >/dev/null 2>&1; then
       return 0
     fi
 
     attempts=$((attempts + 1))
     if (( attempts > 30 )); then
-      printf 'Timed out waiting for %s exec readiness.\n' "${service}" >&2
+      printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
       docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
       exit 1
     fi
 
     sleep 1
   done
+}
+
+run_healthcheck() {
+  local -a compose_files=("$@")
+
+  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  wait_for_cleanup
+  docker compose "${compose_files[@]}" up -d --no-build "${service}"
+  wait_for_workbench_ready "${compose_files[@]}"
+  docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
+  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
+  wait_for_cleanup
 }
 
 run_healthcheck "${compose_base[@]}"
