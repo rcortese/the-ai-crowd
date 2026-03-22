@@ -90,7 +90,7 @@ wait_for_cleanup() {
   done
 }
 
-wait_for_workbench_ready() {
+wait_for_service_ready() {
   local -a compose_files=("$@")
   local attempts=0
 
@@ -116,7 +116,7 @@ run_healthcheck() {
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   wait_for_cleanup
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
-  wait_for_workbench_ready "${compose_files[@]}"
+  wait_for_service_ready "${compose_files[@]}"
   docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
   wait_for_cleanup

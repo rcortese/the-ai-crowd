@@ -11,7 +11,7 @@ This document is descriptive rather than procedural. It captures architectural i
 ## Project Identity
 
 **Project name:** The AI Crowd  
-**Project type:** internal AI workbench for a personal homelab  
+**Project type:** internal AI environment for a personal homelab  
 **Environment model:** personal, shared, high-trust
 
 The name intentionally references *The IT Crowd*. The tone may be light; the project itself is not.
@@ -20,7 +20,7 @@ The name intentionally references *The IT Crowd*. The tone may be light; the pro
 
 ## Executive Summary
 
-The AI Crowd is a **single internal toolbox container** hosted on the main homelab server.
+The AI Crowd is a **single internal engineering environment** hosted on the main homelab server.
 
 Its purpose is to provide one coherent runtime for:
 
@@ -46,7 +46,7 @@ The architecture assumes a homelab with:
 - separate handling for internal management surfaces and published web interfaces,
 - and existing self-hosted infrastructure and AI-adjacent services.
 
-This makes the primary host the natural place for an internal AI workbench with curated project mounts and optional container awareness.
+This makes the primary host the natural place for an internal AI environment with curated project mounts and optional container awareness.
 
 ---
 
@@ -54,7 +54,7 @@ This makes the primary host the natural place for an internal AI workbench with 
 
 The AI Crowd is defined as:
 
-> A single internal toolbox container on the main homelab server that centralizes Claude Code, Gemini CLI, and Codex CLI in one shared runtime, with persistent state, curated project access, and optional Docker integration, for interactive human-supervised use.
+> A single internal engineering environment on the main homelab server that centralizes Claude Code, Gemini CLI, and Codex CLI in one shared runtime, with persistent state, curated project access, and optional Docker integration, for interactive human-supervised use.
 
 ---
 
@@ -62,7 +62,7 @@ The AI Crowd is defined as:
 
 ### Runtime model
 
-The project uses a **single-container workbench model** with:
+The project uses a **single-container model** with:
 
 - Claude Code
 - Gemini CLI
@@ -88,7 +88,7 @@ The container has:
 - **curated mounts** for project repositories and relevant shares,
 - and a shared operating context across all included tools.
 
-This is a toolbox, not a disposable stateless worker.
+This is an operator workspace, not a disposable stateless worker.
 
 ### Docker integration model
 
@@ -96,7 +96,7 @@ Docker integration is **optional**.
 
 The architecture must remain valid in two modes:
 
-1. **Workbench mode**, where the container operates only on files, repositories, shell tools, and AI delegation.
+1. **Standard mode**, where the container operates only on files, repositories, shell tools, and AI delegation.
 2. **Docker-aware mode**, where the container is additionally allowed to inspect or control Docker.
 
 Docker access is therefore a **capability that may be added**, not a defining requirement of the project.
@@ -107,26 +107,26 @@ When Docker integration is enabled, direct `docker.sock` access is acceptable in
 
 ## Key Decisions and Rationale
 
-### 1. The workbench lives on the primary host
+### 1. The system belongs on the primary host
 
-The workbench belongs on the main homelab server rather than a lighter secondary node.
+The system belongs on the main homelab server rather than a lighter secondary node.
 
 **Rationale**
 
 - The primary host already carries the main container and infrastructure workloads.
 - It is the most natural place for project-oriented tooling.
-- It offers the most practical resource envelope for an AI workbench.
+- It offers the most practical resource envelope for this environment.
 
 ### 2. One container contains all three AI CLIs
 
-Claude, Gemini, and Codex live in the same toolbox container.
+Claude, Gemini, and Codex run in the same container.
 
 **Rationale**
 
 - The intended operating model is one main AI with supporting AIs in the same working context.
 - Shared runtime and shared filesystem reduce complexity.
 - Local delegation is easier to reason about than networked cross-container delegation.
-- The same environment can also be used to run Gemini or Codex directly.
+- The same container can also be used to run Gemini or Codex directly.
 
 ### 3. Claude is the primary orchestrator
 
@@ -140,11 +140,11 @@ Claude is the default control point; Gemini and Codex are supporting workers.
 
 ### 4. Persistent state is required
 
-The workbench is expected to retain operator and tool state across restarts.
+The system is expected to retain operator and tool state across restarts.
 
 **Rationale**
 
-The environment is expected to preserve:
+The system is expected to preserve:
 
 - authentication and session material,
 - tool configuration,
@@ -156,7 +156,7 @@ The environment is expected to preserve:
 
 ### 5. Workspace access is curated
 
-The workbench should see only the repositories and shares relevant to its role.
+The container should see only the repositories and shares relevant to its role.
 
 **Rationale**
 
@@ -185,7 +185,7 @@ It belongs to the internal and administrative side of the homelab unless a disti
 
 ## Trust Model
 
-The AI Crowd is a **trusted operator environment**.
+The AI Crowd is a **trusted operator workspace**.
 
 It should be assumed capable of:
 
@@ -194,7 +194,7 @@ It should be assumed capable of:
 - affecting local state broadly,
 - and, when Docker access is enabled, interacting with Docker with high privilege.
 
-This trust model is acceptable only because the environment is personal, the operator remains in the loop, and the project is not intended for untrusted workloads.
+This trust model is acceptable only because the system is personal, the operator remains in the loop, and the project is not intended for untrusted workloads.
 
 ---
 
@@ -214,7 +214,7 @@ It is not intended to be a generic replacement for all host administration.
 
 ## Relationship to Existing Services
 
-The AI Crowd is additive to the current environment.
+The AI Crowd is additive to the current homelab setup.
 
 It is not intended to replace the existing proxying, networking, observability, media, or local AI services already present in the homelab.
 
@@ -227,7 +227,7 @@ It introduces a new internal capability: an agent-centric engineering runtime co
 Treat the following as architectural constraints:
 
 1. **The project name is `The AI Crowd`.**
-2. **The baseline model is one toolbox container.**
+2. **The baseline model is one shared environment, implemented as a single container.**
 3. **Claude is the primary orchestrator.**
 4. **Gemini and Codex are local subordinate workers.**
 5. **Persistent home and state are required.**
@@ -255,7 +255,7 @@ Treat the following as architectural constraints:
 
 - weak isolation between AI tools
 - tighter coupling inside one runtime
-- larger toolbox environment
+- a larger toolbox
 - risk from mistakes, bad prompts, or unsafe commands
 - high effective privilege if Docker access is enabled
 
@@ -273,7 +273,7 @@ Claude, Gemini, and Codex do not have separate runtime boundaries in the chosen 
 
 ### Operational coupling limitation
 
-Dependency, package, and runtime changes affect one shared environment.
+Dependency, package, and runtime changes affect one shared runtime.
 
 ### Autonomy limitation
 
@@ -301,7 +301,7 @@ Interpret this document as a requirement to design a project that is:
 - minimal in architectural layers,
 - explicit about trust boundaries,
 - aligned with the current homelab shape,
-- and centered on one internal AI workbench.
+- and centered on one internal AI environment.
 
 Avoid reinterpreting the project into a fragmented multi-container or microservice design unless there is a strong, explicit reason.
 
@@ -318,9 +318,9 @@ Optimize for:
 
 The AI Crowd should feel like:
 
-- a technical workbench,
+- a technical workspace,
 - an internal AI operations desk,
-- a practical homelab engineering environment,
+- a practical homelab workspace,
 - and a shared runtime where one primary AI can direct other specialist AIs.
 
 It should not feel like:
@@ -334,7 +334,7 @@ It should not feel like:
 
 ## Final Position
 
-The AI Crowd is a **single-container, high-trust, internal AI workbench** on the main homelab server.
+The AI Crowd is a **single-container, high-trust, internal engineering environment** on the main homelab server.
 
 It deliberately chooses:
 

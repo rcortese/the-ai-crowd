@@ -2,7 +2,7 @@
 
 ## Position
 
-The AI Crowd will be a **single internal AI workbench container** for personal homelab.
+The AI Crowd will be a **single internal AI environment** for personal homelab.
 
 It will be:
 
@@ -23,7 +23,7 @@ The design goal is simple: **one durable operator environment that behaves like 
 
 ### 1. Base image
 
-The workbench will use **Ubuntu 24.04 LTS** as its base image.
+The container will use **Ubuntu 24.04 LTS** as its base image.
 
 That choice wins for one reason: **compatibility without drama**.
 
@@ -33,7 +33,7 @@ This project depends on mainstream Linux behavior, glibc compatibility, current 
 
 ### 2. Runtime and tool installation
 
-The workbench will standardize on **Node.js 20 LTS** and install the AI CLIs as part of the image build.
+The image will standardize on **Node.js 20 LTS** and install the AI CLIs as part of the build.
 
 The installation model is:
 
@@ -78,11 +78,11 @@ That means:
 - rebuild deliberately
 - test changes in the image, not ad hoc inside the live container
 
-This project values **predictable behavior over novelty**. A toolbox that changes itself is a liability.
+This project values **predictable behavior over novelty**. A self-updating container is a liability.
 
 ### 5. Persistence model
 
-The workbench is a **long-lived environment**, so user state must persist.
+This is a **long-lived environment**, so user state must persist.
 
 The default persistent model is:
 
@@ -107,11 +107,11 @@ Disposable state includes:
 - large transient downloads
 - rebuildable tool caches
 
-This workbench should restart and feel exactly like the same operator environment.
+It should restart and feel exactly like the same operator environment.
 
 ### 6. Workspace mount model
 
-The workbench will use **curated mounts only**.
+The container will use **curated mounts only**.
 
 It will not be given blind access to the entire host filesystem.
 
@@ -145,7 +145,7 @@ The correct model is **local-first orchestration**, not service sprawl.
 
 ### 8. Access model
 
-The workbench will be **CLI-first**.
+The environment will be **CLI-first**.
 
 Primary access:
 
@@ -164,7 +164,7 @@ The day-one product is a serious shell environment. That is the best fit for AI 
 
 ### 9. Docker capability
 
-Docker access is **optional** and **not part of the core identity** of the workbench.
+Docker access is **optional** and **not part of the core identity** of the system.
 
 The architecture must remain fully valid without Docker integration.
 
@@ -173,7 +173,7 @@ When Docker access is enabled, it is an **explicit high-trust mode** for operato
 That means:
 
 - Docker integration is documented as optional
-- the default workbench remains useful without it
+- the base system remains useful without it
 - enabling host Docker control is treated as a trust boundary change, not a casual toggle
 
 This project is not a “Docker control plane in disguise.” Docker awareness is an extension, not the foundation.
@@ -193,13 +193,13 @@ The baseline is:
 - keep default seccomp/AppArmor style protections in place
 - use tmpfs for obviously transient writable areas where appropriate
 
-This project will **not** chase hardening theater that breaks the workbench.
+This project will **not** chase hardening theater that breaks the shell experience.
 
-Read-only root filesystems, extreme seccomp tuning, or enterprise-style isolation layers are not the baseline here. They add friction faster than they add value in a personal, human-supervised homelab toolbox.
+Read-only root filesystems, extreme seccomp tuning, or enterprise-style isolation layers are not the baseline here. They add friction faster than they add value in a personal, human-supervised homelab environment.
 
 ### 11. Host fit
 
-The workbench must fit normal host operations cleanly.
+The container must fit normal host operations cleanly.
 
 That means:
 
@@ -210,7 +210,7 @@ That means:
 
 ### 12. Toolchain baseline
 
-This is an operator workbench, not a minimal runtime image.
+This is a full operator environment, not a stripped-down base image.
 
 The day-one toolchain will include:
 
@@ -237,10 +237,10 @@ The recovery boundary is:
 
 - source control for project state
 - persistent home for operator state
-- container/image rebuilds for runtime reproducibility
+- image rebuilds and container recreation for runtime reproducibility
 - normal Unraid backups for persistent storage
 
-For AI-driven coding sessions, the workbench should support **frequent local checkpoints**. Long sessions without recovery points are avoidable operator error.
+For AI-driven coding sessions, the environment should support **frequent local checkpoints**. Long sessions without recovery points are avoidable operator error.
 
 The goal is simple: when an agent makes a mess, recovery should be fast, local, and obvious.
 
@@ -248,17 +248,17 @@ The goal is simple: when an agent makes a mess, recovery should be fast, local, 
 
 ## The architecture as one system
 
-The AI Crowd is a **single-container, persistent, terminal-first AI workbench** running on Unraid.
+The AI Crowd is a **single-container, persistent, terminal-first engineering environment** running on Unraid.
 
 It uses **Ubuntu 24.04 LTS** as a glibc-based base, ships a **pinned Node 20 LTS runtime**, and installs **Claude Code, Gemini CLI, and Codex CLI** directly into the image. Claude Code acts as the primary orchestrator. Gemini and Codex act as delegated workers and direct fallback tools in the same shared runtime.
 
 The container runs as a **non-root user** and keeps its **durable operator identity** in persistent storage. That includes shell setup, Git identity, SSH material, and CLI auth/config state. Disposable caches remain separate in spirit and may be separated physically when useful, but the user experience remains that of one durable workstation.
 
-Filesystem access is intentionally narrow. The workbench sees **the projects it is meant to work on**, not the entire host. Active repositories are mounted read-write. Reference sources are mounted read-only. Temporary scratch paths are isolated. This keeps context quality high and limits the consequences of mistakes.
+Filesystem access is intentionally narrow. The container sees **the projects it is meant to work on**, not the entire host. Active repositories are mounted read-write. Reference sources are mounted read-only. Temporary scratch paths are isolated. This keeps context quality high and limits the consequences of mistakes.
 
 The container is accessed primarily through **shell-based workflows**. SSH or equivalent shell entry is the default. A web terminal may be added later as a convenience layer. A browser IDE is not a phase-one requirement.
 
-Docker access is optional. The workbench remains a complete product without it. If Docker control is enabled, that is treated as a deliberate expansion of trust, not as baseline plumbing.
+Docker access is optional. The system remains complete without it. If Docker control is enabled, that is treated as a deliberate expansion of trust, not as baseline plumbing.
 
 Operationally, the project stays aligned with standard Unraid expectations: appdata-style persistence, cache-aware placement for active data, simple backup/restore, and a lifecycle driven by deliberate image rebuilds rather than runtime drift.
 
@@ -270,7 +270,7 @@ Operationally, the project stays aligned with standard Unraid expectations: appd
 - **Do not update tool versions at container startup.**
 - **Do not mount the whole host just because it is convenient.**
 - **Do not make Docker access foundational to the design.**
-- **Do not turn a personal workbench into a pseudo-platform.**
+- **Do not turn a personal toolbox into a pseudo-platform.**
 - **Do not over-harden the container until the shell stops feeling like a workstation.**
 - **Do not put secrets into the image.**
 - **Do not let the live container become the source of truth. The image build is the source of truth.**
@@ -279,7 +279,7 @@ Operationally, the project stays aligned with standard Unraid expectations: appd
 
 ## What this project is
 
-The AI Crowd is a **private operator workbench** for a personal homelab.
+The AI Crowd is a **private operator workspace** for a personal homelab.
 
 It is a durable shell environment where one person can:
 
@@ -303,6 +303,6 @@ The AI Crowd is **not**:
 
 ## Final directive
 
-Build The AI Crowd as a **single, persistent, terminal-first, Ubuntu-based AI workbench container** with **pinned tool versions, curated mounts, non-root execution, Claude-led orchestration, optional Docker capability, and Git-centered recoverability**.
+Build The AI Crowd as a **single, persistent, terminal-first, Ubuntu-based operator environment** with **pinned tool versions, curated mounts, non-root execution, Claude-led orchestration, optional Docker capability, and Git-centered recoverability**.
 
 That is the architecture.

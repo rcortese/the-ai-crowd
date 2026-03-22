@@ -1,17 +1,17 @@
 # The AI Crowd
 
-A homelab AI workbench for Claude-led, multi-model development workflows.
+A homelab AI environment for Claude-led, multi-model development workflows.
 
 ## What it is
 
-The AI Crowd is a single internal toolbox container where Claude acts as the primary orchestrator and Gemini CLI plus Codex CLI are available as local delegated workers or direct fallback tools.
+The AI Crowd is a single internal containerized environment where Claude acts as the primary orchestrator and Gemini CLI plus Codex CLI are available as local delegated workers or direct fallback tools.
 
 ## MVP
 
 This repository now includes a runnable phase-one scaffold:
 
-- `Dockerfile` for an Ubuntu 24.04-based workbench image
-- `compose.yaml` for a persistent, terminal-first runtime
+- `Dockerfile` for an Ubuntu 24.04-based image
+- `compose.yaml` for a persistent, terminal-first container setup
 - pinned build args for Node 20 and the three AI CLIs
 - curated mounts for projects, references, scratch space, and persistent home
 - a non-root entrypoint that initializes operator state cleanly
@@ -46,7 +46,7 @@ This repository now includes a runnable phase-one scaffold:
 
 ## Static Config
 
-The workbench now mounts `./config` read-only at `/workspace/config`.
+The container mounts `./config` read-only at `/workspace/config`.
 
 - Use `./config/gitconfig` for persistent Git identity and aliases that should be injected into the container as static configuration.
 - The standard host layout is fixed in compose: `./state/{home,projects,references,scratch,ssh}` plus `./config`.
@@ -58,7 +58,7 @@ The workbench now mounts `./config` read-only at `/workspace/config`.
 Use SSH as the default interactive Git path.
 
 1. Put your SSH keypair in `state/ssh`.
-2. Start the workbench.
+2. Start the container.
 3. Inside the container, verify access with `ssh -T git@github.com`.
 4. Use Git remotes in SSH form such as `git@github.com:org/repo.git`.
 
@@ -75,7 +75,7 @@ This stores GitHub authentication under the persistent home mount in `state/home
 
 ## Docker Access
 
-The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the workbench with `compose.docker.yaml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable. The socket path is fixed to `/var/run/docker.sock`.
+The base compose stack does not mount `docker.sock`. When you need container inspection or control, start the container with `compose.docker.yaml` layered on top and set `DOCKER_GID` to the host Docker group so access remains explicit and usable. The socket path is fixed to `/var/run/docker.sock`.
 
 ## Authentication
 

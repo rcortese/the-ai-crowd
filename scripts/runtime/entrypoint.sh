@@ -2,8 +2,8 @@
 set -euo pipefail
 
 home_dir="${HOME:-/home/operator}"
-workbench_uid="$(id -u)"
-workbench_gid="$(id -g)"
+runtime_uid="$(id -u)"
+runtime_gid="$(id -g)"
 config_dir="/workspace/config"
 gitconfig_path="${config_dir}/gitconfig"
 ssh_dir="${home_dir}/.ssh"
@@ -19,8 +19,8 @@ ensure_directory() {
   fi
 
   cat >&2 <<EOF
-The AI Crowd workbench could not write to '${dir_path}'.
-The container is running as UID:GID ${workbench_uid}:${workbench_gid}, but the bind-mounted host path does not allow writes.
+The AI Crowd container could not write to '${dir_path}'.
+The container is running as UID:GID ${runtime_uid}:${runtime_gid}, but the bind-mounted host path does not allow writes.
 Fix the owner/permissions of the mounted directory or align WORKBENCH_UID and WORKBENCH_GID in .env with the host path owner, then restart the container.
 EOF
   exit 70
@@ -135,8 +135,8 @@ EOF
 if [[ -d "${ssh_dir}" ]]; then
   if ! chmod 700 "${ssh_dir}" 2>/dev/null; then
     cat >&2 <<EOF
-The AI Crowd workbench could not update permissions for '${ssh_dir}'.
-The mounted SSH directory must be writable by UID:GID ${workbench_uid}:${workbench_gid}.
+The AI Crowd container could not update permissions for '${ssh_dir}'.
+The mounted SSH directory must be writable by UID:GID ${runtime_uid}:${runtime_gid}.
 EOF
     exit 70
   fi
@@ -179,7 +179,7 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if ! command -v claude >/dev/null 2>&1; then
     cat >&2 <<EOF
 The AI Crowd cannot register delegated MCP servers because the Claude CLI is missing.
-This container image is expected to provide the claude command.
+This image is expected to provide the claude command.
 EOF
     exit 70
   fi
@@ -189,7 +189,7 @@ EOF
 fi
 
 cat <<'EOF'
-The AI Crowd workbench is ready.
+The AI Crowd container is ready.
 Projects:   /workspace/projects
 References: /workspace/references
 Scratch:    /workspace/scratch

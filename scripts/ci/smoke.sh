@@ -68,7 +68,7 @@ container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 
 docker inspect -f '{{.State.Running}}' "${container_id}" | grep -qx true
 
-wait_for_workbench_ready() {
+wait_for_service_ready() {
   local attempts=0
 
   while true; do
@@ -87,7 +87,7 @@ wait_for_workbench_ready() {
   done
 }
 
-wait_for_workbench_ready
+wait_for_service_ready
 
 run_exec_cli_check() {
   local version_cmd="$1"
