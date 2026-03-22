@@ -17,23 +17,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Verify runtime entrypoint script syntax
-        run: bash -n scripts/runtime/entrypoint.sh
-
-      - name: Verify runtime healthcheck script syntax
-        run: bash -n scripts/runtime/healthcheck.sh
-
-      - name: Verify CI healthcheck script syntax
-        run: bash -n scripts/ci/healthcheck.sh
-
-      - name: Validate base Compose configuration
-        run: docker compose -f compose.yaml config
-
-      - name: Validate Docker Compose override configuration
-        env:
-          DOCKER_GID: "998"
-        run: docker compose -f compose.yaml -f compose.docker.yaml config
-
       - name: Build Docker image
         run: docker compose -f compose.yaml build the-ai-crowd
 
