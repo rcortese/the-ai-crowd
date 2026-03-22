@@ -1,5 +1,7 @@
 # GUIDELINES
 
+This document is the normative decision record for project-level choices. Keep operational setup and day-to-day usage in [README.md](../README.md). Keep architecture boundaries and scope in [docs/ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Position
 
 The AI Crowd will be a **single internal AI environment** for personal homelab.

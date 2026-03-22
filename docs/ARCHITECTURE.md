@@ -6,6 +6,11 @@
 
 This document is descriptive rather than procedural. It captures architectural intent, boundaries, assumptions, and tradeoffs.
 
+Project-level decisions and operational guidance live elsewhere:
+
+- [docs/GUIDELINES.md](GUIDELINES.md): normative design decisions
+- [README.md](../README.md): setup and day-to-day usage
+
 ---
 
 ## Project Identity
