@@ -18,7 +18,7 @@ jobs:
         run: bash -n scripts/runtime/entrypoint.sh
 
       - name: Verify healthcheck script syntax
-        run: bash -n scripts/runtime/workbench-healthcheck.sh
+        run: bash -n scripts/runtime/healthcheck.sh
 
       - name: Verify healthcheck CI helper syntax
         run: bash -n scripts/ci/healthcheck.sh
