@@ -71,6 +71,7 @@ fi
 
 if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" == "true" ]]; then
   [[ -S /var/run/docker.sock ]] || fail "docker mode enabled but /var/run/docker.sock is not available"
+  docker info >/dev/null 2>&1 || fail "docker mode enabled but docker daemon is not accessible"
 else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"
 fi

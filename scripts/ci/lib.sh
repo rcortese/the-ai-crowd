@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Maximum seconds to wait for container readiness or cleanup
-CI_WAIT_TIMEOUT=90
+export CI_WAIT_TIMEOUT=90
 
 set_workbench_ids() {
   export WORKBENCH_UID="${WORKBENCH_UID:-$(id -u)}"

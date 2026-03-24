@@ -85,6 +85,12 @@ The project uses a **single-container model** with:
 - Delegation is expected to happen locally inside the same runtime whenever practical.
 - Direct use of Gemini or Codex remains available when limits or workflow preferences require it.
 
+### Multi-model delegation
+
+The image bakes in **claude-delegator** at build time from a pinned upstream commit. The download is verified with a SHA-256 checksum before extraction so the delegation layer stays reproducible and supply-chain tampering is easier to detect.
+
+At runtime, claude-delegator registers **Gemini** and **Codex** as local **stdio MCP workers**. Claude can therefore delegate work inside the same container without standing up separate network services. The delegation model stays local-first: shared filesystem, shared shell context, one operator, no internal service mesh.
+
 ### Filesystem and state model
 
 The container has:
@@ -107,6 +113,18 @@ The architecture must remain valid in two modes:
 Docker access is therefore a **capability that may be added**, not a defining requirement of the project.
 
 When Docker integration is enabled, direct `docker.sock` access is acceptable in this context because the environment is personal, shared, and operator-supervised.
+
+### Git authentication model
+
+Git authentication defaults to **SSH**, not HTTPS tokens.
+
+**Rationale**
+
+- SSH keys do not expire like personal access tokens.
+- SSH works cleanly with hardware-backed keys and agent forwarding.
+- SSH avoids accidental HTTPS token exposure in shell history, process listings, or container logs.
+
+For GitHub access, the image also pre-pins GitHub SSH host keys in `/etc/ssh/ssh_known_hosts`. That gives the container a stable trust anchor for Git operations and reduces supply-chain risk from first-connect host key prompts or spoofed endpoints.
 
 ---
 
@@ -142,6 +160,7 @@ Claude is the default control point; Gemini and Codex are supporting workers.
 - This matches the intended interaction model.
 - It keeps the operator workflow simple.
 - It preserves direct fallback to other providers without changing environment or context.
+- claude-delegator provides the local stdio MCP bridge Claude uses to hand work to Gemini and Codex without leaving the container.
 
 ### 4. Persistent state is required
 

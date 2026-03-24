@@ -246,6 +246,22 @@ For AI-driven coding sessions, the environment should support **frequent local c
 
 The goal is simple: when an agent makes a mess, recovery should be fast, local, and obvious.
 
+### 14. CI conventions
+
+CI scripts live under `scripts/ci/` with a small, explicit layout:
+
+- `lib.sh` holds shared fixtures and helper functions used by multiple CI entrypoints.
+- `smoke.sh` validates the runtime image and delegation surface, including the installed AI CLIs and local delegation wiring.
+- `healthcheck.sh` validates the runtime healthcheck contract in both base mode and Docker-enabled mode.
+
+Static shell linting is enforced with `shellcheck` for all project scripts via `.github/workflows/lint.yml`. Script changes are expected to keep that baseline clean.
+
+Workflow responsibilities stay narrow:
+
+- `lint.yml` is for static checks only.
+- `ci.yml` is for image build, smoke coverage, and healthcheck coverage.
+- `publish-dockerhub.yml` is only for tag-triggered Docker Hub publication.
+
 ---
 
 ## The architecture as one system
