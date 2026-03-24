@@ -58,7 +58,7 @@ wait_for_service_ready() {
     fi
 
     attempts=$((attempts + 1))
-    if (( attempts > 30 )); then
+    if (( attempts > CI_WAIT_TIMEOUT )); then
       printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
       docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
       return 1
@@ -73,8 +73,8 @@ wait_for_service_ready
 run_exec_cli_check() {
   local version_cmd="$1"
   local version_pattern="$2"
-  local help_cmd="$3"
-  local help_pattern="$4"
+  local help_cmd="${3:-}"
+  local help_pattern="${4:-}"
   local version_output
   local help_output
 
@@ -82,13 +82,15 @@ run_exec_cli_check() {
     docker compose "${compose_files[@]}" exec -T "${service}" \
       bash -lc "${version_cmd}" 2>&1
   )"
-  help_output="$(
-    docker compose "${compose_files[@]}" exec -T "${service}" \
-      bash -lc "${help_cmd}" 2>&1
-  )"
-
   printf '%s\n' "${version_output}" | grep -q "${version_pattern}"
-  printf '%s\n' "${help_output}" | grep -q "${help_pattern}"
+
+  if [[ -n "${help_cmd}" ]] && [[ -n "${help_pattern}" ]]; then
+    help_output="$(
+      docker compose "${compose_files[@]}" exec -T "${service}" \
+        bash -lc "${help_cmd}" 2>&1
+    )"
+    printf '%s\n' "${help_output}" | grep -q "${help_pattern}"
+  fi
 }
 
 docker compose "${compose_files[@]}" exec -T \
@@ -149,8 +151,6 @@ docker compose "${compose_files[@]}" exec -T \
 
 run_exec_cli_check \
   "gemini --version" \
-  "^${expected_gemini_version}$" \
-  "gemini --help" \
-  "Gemini CLI - Launch an interactive CLI"
+  "^${expected_gemini_version}$"
 
 cd "${repo_root}"

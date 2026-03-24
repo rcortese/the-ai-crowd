@@ -2,6 +2,7 @@ FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NODE_MAJOR=20
+ARG NODE_VERSION=20.20.1
 ARG USERNAME=operator
 ARG USER_UID=1000
 ARG USER_GID=1000
@@ -61,7 +62,7 @@ RUN apt-get -o Acquire::Retries=3 update && \
       dnsutils \
       iputils-ping \
       htop \
-      nodejs \
+      nodejs=${NODE_VERSION}-1nodesource1 \
       python3 \
       python3-pip \
       pipx \

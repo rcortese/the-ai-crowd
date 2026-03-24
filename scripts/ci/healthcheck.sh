@@ -53,7 +53,7 @@ wait_for_cleanup() {
 
   while docker ps -a --filter "name=^/${container_name}$" -q | grep -q .; do
     attempts=$((attempts + 1))
-    if (( attempts > 30 )); then
+    if (( attempts > CI_WAIT_TIMEOUT )); then
       printf 'Timed out waiting for container cleanup.\n' >&2
       exit 1
     fi
@@ -63,7 +63,7 @@ wait_for_cleanup() {
   attempts=0
   while docker network ls --format '{{.Name}}' | grep -qx "${network_name}"; do
     attempts=$((attempts + 1))
-    if (( attempts > 30 )); then
+    if (( attempts > CI_WAIT_TIMEOUT )); then
       printf 'Timed out waiting for network cleanup.\n' >&2
       exit 1
     fi
@@ -81,7 +81,7 @@ wait_for_service_ready() {
     fi
 
     attempts=$((attempts + 1))
-    if (( attempts > 30 )); then
+    if (( attempts > CI_WAIT_TIMEOUT )); then
       printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
       docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
       exit 1

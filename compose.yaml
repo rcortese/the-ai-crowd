@@ -4,6 +4,7 @@ services:
       context: .
       args:
         NODE_MAJOR: ${NODE_MAJOR:-20}
+        NODE_VERSION: ${NODE_VERSION:-20.20.1}
         USERNAME: ${WORKBENCH_USER:-operator}
         USER_UID: ${WORKBENCH_UID:-1000}
         USER_GID: ${WORKBENCH_GID:-1000}

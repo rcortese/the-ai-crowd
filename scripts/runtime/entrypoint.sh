@@ -156,13 +156,11 @@ if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" != "true" ]]; then
   export DOCKER_HOST=""
 fi
 
-# claude-delegator: copy orchestration rules on first boot
+# claude-delegator: sync orchestration rules on every boot (image is source of truth)
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]]; then
   delegator_rules_dst="${home_dir}/.claude/rules/delegator"
-  if [[ ! -d "${delegator_rules_dst}" ]]; then
-    mkdir -p "${delegator_rules_dst}"
-    cp "${CLAUDE_PLUGIN_ROOT}/rules/"*.md "${delegator_rules_dst}/"
-  fi
+  mkdir -p "${delegator_rules_dst}"
+  cp "${CLAUDE_PLUGIN_ROOT}/rules/"*.md "${delegator_rules_dst}/"
 fi
 
 # claude-delegator: register MCP servers (idempotent, non-fatal)
