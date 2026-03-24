@@ -12,7 +12,8 @@ ARG GEMINI_CLI_PACKAGE=@google/gemini-cli
 ARG GEMINI_CLI_VERSION=0.1.18
 ARG CODEX_CLI_PACKAGE=@openai/codex
 ARG CODEX_CLI_VERSION=0.26.0
-ARG CLAUDE_DELEGATOR_COMMIT=6c3535b642ce8ea352f7fac85d063f6b6d62253f
+ARG CLAUDE_DELEGATOR_COMMIT
+ARG CLAUDE_DELEGATOR_SHA256=087d8f4254fadb607360df8f04a21ffb2cee042d2b6a355a7f99d44c53aef27f
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
@@ -95,9 +96,13 @@ RUN npm install -g "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}"
 RUN npm install -g "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
 
 RUN mkdir -p /opt/claude-delegator \
+    && tmp_archive="$(mktemp)" \
     && curl -fsSL --retry 5 --retry-all-errors --connect-timeout 10 \
       "https://codeload.github.com/jarrodwatts/claude-delegator/tar.gz/${CLAUDE_DELEGATOR_COMMIT}" \
-      | tar -xz -C /opt/claude-delegator --strip-components=1 \
+      -o "${tmp_archive}" \
+    && printf '%s  %s\n' "${CLAUDE_DELEGATOR_SHA256}" "${tmp_archive}" | sha256sum --check - \
+    && tar -xz -C /opt/claude-delegator --strip-components=1 -f "${tmp_archive}" \
+    && rm -f "${tmp_archive}" \
     && chown -R "${USER_UID}:${USER_GID}" /opt/claude-delegator
 
 ENV CLAUDE_PLUGIN_ROOT=/opt/claude-delegator

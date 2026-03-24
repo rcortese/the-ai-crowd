@@ -99,6 +99,18 @@ run_healthcheck() {
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
   wait_for_service_ready "${compose_files[@]}"
   docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
+  # claude-delegator integration assertions
+  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc '
+    set -euo pipefail
+    [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] || { printf "CLAUDE_PLUGIN_ROOT not set\n" >&2; exit 1; }
+    [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]] || { printf "Missing CLAUDE_PLUGIN_ROOT/rules\n" >&2; exit 1; }
+    [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]] || { printf "orchestration.md not synced\n" >&2; exit 1; }
+    status_file="${HOME}/.local/share/ai-crowd/claude-mcp-bootstrap.status"
+    if [[ -s "${status_file}" ]]; then
+      printf "claude-delegator bootstrap degraded: %s\n" "$(cat "${status_file}")" >&2
+      exit 1
+    fi
+  '
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
   wait_for_cleanup
 }
