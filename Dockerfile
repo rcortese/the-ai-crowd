@@ -14,6 +14,7 @@ ARG CODEX_CLI_PACKAGE=@openai/codex
 ARG CODEX_CLI_VERSION=0.26.0
 ARG CLAUDE_DELEGATOR_COMMIT
 ARG CLAUDE_DELEGATOR_SHA256=087d8f4254fadb607360df8f04a21ffb2cee042d2b6a355a7f99d44c53aef27f
+ARG DOCKER_CE_CLI_VERSION
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
@@ -35,6 +36,12 @@ RUN apt-get -o Acquire::Retries=3 update && \
       gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
       > /etc/apt/sources.list.d/nodesource.list && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+      gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    chmod a+r /etc/apt/keyrings/docker.gpg && \
+    . /etc/os-release && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable" \
+      > /etc/apt/sources.list.d/docker.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
       bash \
@@ -70,7 +77,8 @@ RUN apt-get -o Acquire::Retries=3 update && \
       build-essential \
       make \
       pkg-config \
-      openssh-client && \
+      openssh-client \
+      docker-ce-cli${DOCKER_CE_CLI_VERSION:+=${DOCKER_CE_CLI_VERSION}} && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd && \
     ln -sf /usr/bin/batcat /usr/local/bin/bat && \
     if ! getent group "${USER_GID}" >/dev/null; then \

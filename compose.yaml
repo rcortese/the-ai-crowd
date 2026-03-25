@@ -13,6 +13,7 @@ services:
         CODEX_CLI_VERSION: ${CODEX_CLI_VERSION:-0.26.0}
         CLAUDE_DELEGATOR_COMMIT: ${CLAUDE_DELEGATOR_COMMIT:-6c3535b642ce8ea352f7fac85d063f6b6d62253f}
         CLAUDE_DELEGATOR_SHA256: ${CLAUDE_DELEGATOR_SHA256:-087d8f4254fadb607360df8f04a21ffb2cee042d2b6a355a7f99d44c53aef27f}
+        DOCKER_CE_CLI_VERSION: ${DOCKER_CE_CLI_VERSION:-}
     image: the-ai-crowd:local
     container_name: the-ai-crowd
     init: true
