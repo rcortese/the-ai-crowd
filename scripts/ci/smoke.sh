@@ -34,13 +34,18 @@ trap cleanup EXIT
 
 cd "${temp_repo}"
 
-config_user="$(docker compose "${compose_files[@]}" config --format json | jq -r '.services["the-ai-crowd"].user')"
+compose_config_json="$(docker compose "${compose_files[@]}" config --format json)"
+config_user="$(jq -r '.services["the-ai-crowd"].user' <<< "${compose_config_json}")"
 expected_uid="${config_user%%:*}"
 expected_gid="${config_user##*:}"
-expected_gemini_version="$(
-  docker compose "${compose_files[@]}" config --format json |
-    jq -r '.services["the-ai-crowd"].build.args.GEMINI_CLI_VERSION'
-)"
+expected_gemini_version="$(jq -r '.services["the-ai-crowd"].build.args.GEMINI_CLI_VERSION' <<< "${compose_config_json}")"
+expected_claude_version="$(jq -r '.services["the-ai-crowd"].build.args.CLAUDE_CODE_VERSION' <<< "${compose_config_json}")"
+expected_codex_version="$(jq -r  '.services["the-ai-crowd"].build.args.CODEX_CLI_VERSION'   <<< "${compose_config_json}")"
+
+[[ -z "${expected_claude_version}" || "${expected_claude_version}" == "null" ]] \
+  && { printf 'ERROR: CLAUDE_CODE_VERSION missing from compose build args\n' >&2; exit 1; }
+[[ -z "${expected_codex_version}"  || "${expected_codex_version}"  == "null" ]] \
+  && { printf 'ERROR: CODEX_CLI_VERSION missing from compose build args\n' >&2; exit 1; }
 
 docker compose "${compose_files[@]}" up -d --no-build "${service}"
 
@@ -48,25 +53,6 @@ container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 [[ -n "${container_id}" ]]
 
 docker inspect -f '{{.State.Running}}' "${container_id}" | grep -qx true
-
-wait_for_service_ready() {
-  local attempts=0
-
-  while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck >/dev/null 2>&1; then
-      return 0
-    fi
-
-    attempts=$((attempts + 1))
-    if (( attempts > CI_WAIT_TIMEOUT )); then
-      printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
-      docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
-      return 1
-    fi
-
-    sleep 1
-  done
-}
 
 wait_for_service_ready
 
@@ -152,5 +138,15 @@ docker compose "${compose_files[@]}" exec -T \
 run_exec_cli_check \
   "gemini --version" \
   "^${expected_gemini_version}$"
+
+# Exact version checks for claude and codex (dots escaped — they are regex metacharacters)
+escaped_claude_version="${expected_claude_version//./\\.}"
+escaped_codex_version="${expected_codex_version//./\\.}"
+run_exec_cli_check \
+  "claude --version" \
+  "^${escaped_claude_version}$"
+run_exec_cli_check \
+  "codex --version" \
+  "^${escaped_codex_version}$"
 
 cd "${repo_root}"

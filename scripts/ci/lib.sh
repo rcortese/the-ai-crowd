@@ -30,6 +30,25 @@ prepare_temp_repo_fixture() {
     "${temp_repo}/state/ssh"
 }
 
+wait_for_service_ready() {
+  local attempts=0
+
+  while true; do
+    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck >/dev/null 2>&1; then
+      return 0
+    fi
+
+    attempts=$((attempts + 1))
+    if (( attempts > CI_WAIT_TIMEOUT )); then
+      printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
+      docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
+      return 1
+    fi
+
+    sleep 1
+  done
+}
+
 write_compose_override() {
   local override_file="$1"
   local container_name="$2"
