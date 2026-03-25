@@ -52,5 +52,5 @@ codex
 ## Notes
 
 - `state/` must be writable by `WORKBENCH_UID:WORKBENCH_GID` or startup fails
-- Docker-aware mode is optional; the image does not currently install the `docker` CLI
-- Exact tool versions stay pinned in the image and env config
+- Docker-aware mode is optional; the image already includes the `docker` CLI, and the overlay adds socket and group access
+- AI CLI versions are pinned in the image and `.env`; `docker-ce-cli` can also be pinned explicitly through `DOCKER_CE_CLI_VERSION`

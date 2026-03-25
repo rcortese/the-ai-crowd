@@ -70,4 +70,4 @@ Bootstrap status is written to `state/home/.local/share/ai-crowd/claude-mcp-boot
 - Delegated MCP workflows are missing:
   check `state/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`
 - Docker-aware mode is confusing:
-  the overlay mounts the socket and group, but the image does not currently include the `docker` CLI
+  the image already includes the `docker` CLI; the overlay mounts the socket and group so the container can talk to the host daemon

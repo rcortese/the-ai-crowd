@@ -63,4 +63,4 @@ docker compose -f compose.yaml -f compose.docker.yaml up -d
 
 This overlay enables Docker-aware mode by setting `AI_CROWD_ENABLE_DOCKER=true`, passing `DOCKER_GID`, and mounting `/var/run/docker.sock`.
 
-Keep the wording precise: the Compose overlay exists, but the image does not currently install the `docker` CLI.
+Keep the wording precise: the image already installs the `docker` CLI. The Compose overlay adds access to the host daemon by mounting `/var/run/docker.sock` and adding the matching Docker group.
