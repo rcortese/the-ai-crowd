@@ -30,6 +30,8 @@ prepare_temp_repo_fixture() {
     "${temp_repo}/state/ssh"
 }
 
+# compose_files and service are caller-set globals
+# shellcheck disable=SC2154
 wait_for_service_ready() {
   local attempts=0
 
