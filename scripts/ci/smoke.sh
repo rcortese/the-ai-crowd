@@ -66,7 +66,8 @@ run_exec_cli_check() {
 
   version_output="$(
     docker compose "${compose_files[@]}" exec -T "${service}" \
-      bash -lc "${version_cmd}" 2>&1
+      bash -lc "${version_cmd}" 2>&1 \
+    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
   )"
   printf '%s\n' "${version_output}" | grep -q "${version_pattern}"
 
