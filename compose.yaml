@@ -24,6 +24,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       AI_CROWD_ENABLE_DOCKER: ${AI_CROWD_ENABLE_DOCKER:-false}
+      CODEX_MCP_MODEL: ${CODEX_MCP_MODEL:-gpt-5.3-codex}
     security_opt:
       - no-new-privileges:true
     cap_drop:

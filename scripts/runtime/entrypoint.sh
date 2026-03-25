@@ -174,7 +174,8 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if ! command -v claude >/dev/null 2>&1; then
     warn_claude_mcp_bootstrap "The AI Crowd could not register delegated MCP servers because the Claude CLI is missing. Delegated Claude workflows and Claude CLI usage are unavailable, but shell access and direct Gemini/Codex CLI usage remain available."
   else
-    register_claude_mcp codex codex -m gpt-5.3-codex mcp-server || true
+    codex_mcp_model="${CODEX_MCP_MODEL:-gpt-5.3-codex}"
+    register_claude_mcp codex codex -m "${codex_mcp_model}" mcp-server || true
     register_claude_mcp gemini node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" || true
   fi
 fi
