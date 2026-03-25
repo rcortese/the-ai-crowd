@@ -105,10 +105,7 @@ register_claude_mcp() {
   shift 2
   local -a command_args=("$@")
 
-  if claude_config_has_mcp "${mcp_name}"; then
-    return 0
-  fi
-
+  # Always overwrite — ensures stale entries in persisted state/home are corrected on every boot.
   if ! bootstrap_claude_config; then
     warn_claude_mcp_bootstrap "The AI Crowd could not bootstrap Claude config for MCP '${mcp_name}'. Delegated Claude workflows are unavailable, but shell access and direct CLI usage remain available."
     return 1
