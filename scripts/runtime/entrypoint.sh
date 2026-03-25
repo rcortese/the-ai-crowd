@@ -154,10 +154,18 @@ if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" != "true" ]]; then
 fi
 
 # claude-delegator: sync orchestration rules on every boot (image is source of truth)
+# Prune first so rules removed or renamed upstream do not persist in state/home.
+# ~/.claude/rules/delegator/ is exclusively managed here — do not place custom files there.
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]]; then
   delegator_rules_dst="${home_dir}/.claude/rules/delegator"
   mkdir -p "${delegator_rules_dst}"
-  cp "${CLAUDE_PLUGIN_ROOT}/rules/"*.md "${delegator_rules_dst}/"
+  find "${delegator_rules_dst}" -maxdepth 1 -name "*.md" -type f -delete
+  shopt -s nullglob
+  delegator_md_files=( "${CLAUDE_PLUGIN_ROOT}/rules/"*.md )
+  if (( ${#delegator_md_files[@]} > 0 )); then
+    cp "${delegator_md_files[@]}" "${delegator_rules_dst}/"
+  fi
+  shopt -u nullglob
 fi
 
 # claude-delegator: register MCP servers (idempotent, non-fatal)
