@@ -11,7 +11,6 @@ Prepare these paths:
 - `data/references`
 - `data/scratch`
 - `data/ssh`
-- `data/config`
 
 Inside the container, they appear under `/home/$WORKBENCH_USER` and `/workspace/*`.
 
@@ -19,13 +18,12 @@ Inside the container, they appear under `/home/$WORKBENCH_USER` and `/workspace/
 
 Use this path to run the published image without triggering a local build.
 
-**1. Create the state directories and config:**
+**1. Create the data directories:**
 
 ```bash
-mkdir -p data/home data/projects data/references data/scratch data/ssh data/config
+mkdir -p data/home data/projects data/references data/scratch data/ssh
 chown -R "$(id -u):$(id -g)" data
 cp .env.example .env
-cp data/config/gitconfig.example data/config/gitconfig
 ```
 
 **2. Edit `.env`:**
@@ -34,9 +32,7 @@ Set `WORKBENCH_UID` and `WORKBENCH_GID` to match the owner of the `data/` tree, 
 
 Keep `WORKBENCH_USER=operator`. The published image has `USERNAME=operator` baked in; changing this value requires a local build (Path B).
 
-**3. Edit `data/config/gitconfig`.**
-
-**4. Pull and start:**
+**3. Pull and start:**
 
 ```bash
 docker pull rcortese/the-ai-crowd:latest

@@ -53,7 +53,7 @@ When unset, the entrypoint applies:
 - `pull.rebase=false`
 - `core.editor=vim`
 
-If `/workspace/config/gitconfig` exists, it is added through `include.path`.
+Git config lives at `~/.gitconfig` inside `data/home` and persists across restarts.
 
 ## Delegation
 

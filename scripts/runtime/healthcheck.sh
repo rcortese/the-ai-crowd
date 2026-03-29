@@ -29,13 +29,6 @@ check_git_config() {
   [[ "${actual}" == "${expected}" ]] || fail "git config ${key} expected ${expected}, got ${actual:-<unset>}"
 }
 
-check_git_include_path() {
-  local include_path="$1"
-
-  git config --global --get-all include.path | grep -Fx "${include_path}" >/dev/null ||
-    fail "git config include.path is missing ${include_path}"
-}
-
 check_claude_mcp_registered() {
   local mcp_name="$1"
 
@@ -44,7 +37,6 @@ check_claude_mcp_registered() {
 }
 
 home_dir="${HOME:-/home/operator}"
-gitconfig_path="/workspace/config/gitconfig"
 ai_crowd_state_dir="${home_dir}/.local/share/ai-crowd"
 claude_mcp_status_path="${ai_crowd_state_dir}/claude-mcp-bootstrap.status"
 
@@ -64,10 +56,6 @@ require_command codex
 check_git_config init.defaultBranch main
 check_git_config pull.rebase false
 check_git_config core.editor vim
-
-if [[ -f "${gitconfig_path}" ]]; then
-  check_git_include_path "${gitconfig_path}"
-fi
 
 if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" == "true" ]]; then
   [[ -S /var/run/docker.sock ]] || fail "docker mode enabled but /var/run/docker.sock is not available"

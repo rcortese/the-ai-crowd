@@ -26,6 +26,5 @@ services:
       - ./data/projects:/workspace/projects
       - ./data/references:/workspace/references:ro
       - ./data/scratch:/workspace/scratch
-      - ./data/config:/workspace/config:ro
       - ./data/ssh:/home/${WORKBENCH_USER:-operator}/.ssh
       - /etc/localtime:/etc/localtime:ro

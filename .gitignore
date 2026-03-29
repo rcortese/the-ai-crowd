@@ -4,7 +4,6 @@ data/projects/
 data/references/
 data/scratch/
 data/ssh/
-data/config/gitconfig
 tmp/
 CLAUDE.md
 .claude/

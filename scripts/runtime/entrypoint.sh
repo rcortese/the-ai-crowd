@@ -4,8 +4,6 @@ set -euo pipefail
 home_dir="${HOME:-/home/operator}"
 runtime_uid="$(id -u)"
 runtime_gid="$(id -g)"
-config_dir="/workspace/config"
-gitconfig_path="${config_dir}/gitconfig"
 ssh_dir="${home_dir}/.ssh"
 claude_config_path="${home_dir}/.claude.json"
 claude_config_backup_path="${home_dir}/.claude.json.backup"
@@ -131,10 +129,6 @@ EOF
   fi
   find "${ssh_dir}" -type f \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 644 {} +
   find "${ssh_dir}" -type f ! \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 600 {} +
-fi
-
-if [[ -f "${gitconfig_path}" ]] && ! git config --global --get-all include.path | grep -Fx "${gitconfig_path}" >/dev/null; then
-  git config --global --add include.path "${gitconfig_path}"
 fi
 
 if ! git config --global --get init.defaultBranch >/dev/null; then

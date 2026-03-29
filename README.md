@@ -26,9 +26,8 @@ Default workspace paths inside the container:
 
 ```bash
 cp .env.example .env
-mkdir -p data/home data/projects data/references data/scratch data/ssh data/config
+mkdir -p data/home data/projects data/references data/scratch data/ssh
 chown -R "$(id -u):$(id -g)" data
-cp data/config/gitconfig.example data/config/gitconfig
 docker pull rcortese/the-ai-crowd:latest
 docker compose up -d
 docker exec -it the-ai-crowd bash -l
