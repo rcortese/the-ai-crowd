@@ -13,7 +13,7 @@ prepare_temp_repo_fixture() {
 
   mkdir -p "${temp_repo}"
   cp compose.yaml compose.build.yaml compose.docker.yaml Dockerfile README.md "${temp_repo}/"
-  cp -r docs data scripts .dockerignore .gitignore .github "${temp_repo}/"
+  cp -r docs scripts .dockerignore .gitignore .github "${temp_repo}/"
   mkdir -p \
     "${temp_repo}/data/home" \
     "${temp_repo}/data/projects" \
