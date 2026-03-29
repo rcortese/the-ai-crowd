@@ -29,7 +29,7 @@ cp .env.example .env
 mkdir -p state/home state/projects state/references state/scratch state/ssh config
 chown -R "$(id -u):$(id -g)" state
 cp config/gitconfig.example config/gitconfig
-docker compose up -d --build
+docker compose up -d
 docker exec -it the-ai-crowd bash -l
 ```
 
@@ -53,4 +53,4 @@ codex
 
 - `state/` must be writable by `WORKBENCH_UID:WORKBENCH_GID` or startup fails
 - Docker-aware mode is optional; the image already includes the `docker` CLI, and the overlay adds socket and group access
-- AI CLI versions are pinned in the image and `.env`; `docker-ce-cli` can also be pinned explicitly through `DOCKER_CE_CLI_VERSION`
+- AI CLI versions are pinned in the image (see `Dockerfile` ARG defaults); `docker-ce-cli` can also be pinned explicitly through `DOCKER_CE_CLI_VERSION` when building locally

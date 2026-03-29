@@ -5,7 +5,7 @@ This guide covers normal use after the container exists.
 ## Common Commands
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 docker exec -it the-ai-crowd bash -l
 docker compose -f compose.yaml -f compose.docker.yaml up -d
 bash scripts/ci/smoke.sh
