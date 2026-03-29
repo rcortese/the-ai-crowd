@@ -111,3 +111,7 @@ Read in this order if you are onboarding:
 3. [Architecture](docs/ARCHITECTURE.md) for runtime model, delegation, trust boundaries, and startup behavior
 4. [Workspace](docs/WORKSPACE.md) for host/container paths and persistence boundaries
 5. [Guidelines](docs/GUIDELINES.md) for maintainer rules and project invariants
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
