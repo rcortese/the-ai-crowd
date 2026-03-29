@@ -39,6 +39,27 @@ jobs:
             type=ref,event=tag
             type=sha,prefix=sha-
 
+      - name: Extract build args from Dockerfile
+        id: build_args
+        run: |
+          extract_arg() {
+            local key="$1"
+            local value
+            value="$(grep -E "^ARG ${key}=" Dockerfile | sed -E "s/^ARG ${key}=(.*)$/\1/")"
+            printf '%s=%s\n' "$key" "$value" >> "$GITHUB_OUTPUT"
+          }
+
+          extract_arg NODE_MAJOR
+          extract_arg NODE_VERSION
+          extract_arg USERNAME
+          extract_arg USER_UID
+          extract_arg USER_GID
+          extract_arg CLAUDE_CODE_VERSION
+          extract_arg GEMINI_CLI_VERSION
+          extract_arg CODEX_CLI_VERSION
+          extract_arg CLAUDE_DELEGATOR_COMMIT
+          extract_arg CLAUDE_DELEGATOR_SHA256
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -47,3 +68,14 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NODE_MAJOR=${{ steps.build_args.outputs.NODE_MAJOR }}
+            NODE_VERSION=${{ steps.build_args.outputs.NODE_VERSION }}
+            USERNAME=${{ steps.build_args.outputs.USERNAME }}
+            USER_UID=${{ steps.build_args.outputs.USER_UID }}
+            USER_GID=${{ steps.build_args.outputs.USER_GID }}
+            CLAUDE_CODE_VERSION=${{ steps.build_args.outputs.CLAUDE_CODE_VERSION }}
+            GEMINI_CLI_VERSION=${{ steps.build_args.outputs.GEMINI_CLI_VERSION }}
+            CODEX_CLI_VERSION=${{ steps.build_args.outputs.CODEX_CLI_VERSION }}
+            CLAUDE_DELEGATOR_COMMIT=${{ steps.build_args.outputs.CLAUDE_DELEGATOR_COMMIT }}
+            CLAUDE_DELEGATOR_SHA256=${{ steps.build_args.outputs.CLAUDE_DELEGATOR_SHA256 }}
