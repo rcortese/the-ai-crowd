@@ -64,32 +64,30 @@ else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"
 fi
 
-# claude-delegator: rules and MCP registration are best-effort.
+# claude-delegator: registration is required for a healthy runtime.
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if [[ ! -f "${home_dir}/.claude/rules/delegator/orchestration.md" ]]; then
-    warn "claude-delegator rules not installed"
+    fail "claude-delegator rules not installed"
   fi
 
   if [[ ! -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]; then
-    warn "gemini MCP bridge missing"
+    fail "gemini MCP bridge missing"
   elif ! node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" >/dev/null 2>&1; then
-    warn "gemini MCP bridge syntax error"
+    fail "gemini MCP bridge syntax error"
   fi
 
   if ! check_claude_mcp_registered codex; then
-    warn "claude MCP is not registered: codex"
+    fail "claude MCP is not registered: codex"
   fi
 
   if ! check_claude_mcp_registered gemini; then
-    warn "claude MCP is not registered: gemini"
+    fail "claude MCP is not registered: gemini"
   fi
 fi
 
 if [[ -s "${claude_mcp_status_path}" ]]; then
-  while IFS= read -r warning_message; do
-    [[ -n "${warning_message}" ]] || continue
-    warn "${warning_message}"
-  done < "${claude_mcp_status_path}"
+  status_summary="$(paste -sd ';' "${claude_mcp_status_path}")"
+  fail "claude MCP bootstrap degraded: ${status_summary}"
 fi
 
 printf 'The AI Crowd healthcheck passed.\n'
