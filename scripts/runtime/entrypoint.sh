@@ -127,14 +127,14 @@ register_claude_mcp() {
 
   # Always overwrite — ensures stale entries in persisted state/home are corrected on every boot.
   if ! bootstrap_claude_config; then
-    warn_claude_mcp_bootstrap "The AI Crowd could not bootstrap Claude config for MCP '${mcp_name}'. Delegated Claude workflows are unavailable, but shell access and direct CLI usage remain available."
+    warn_claude_mcp_bootstrap "The AI Crowd could not bootstrap Claude config for MCP '${mcp_name}'. Shell access and direct CLI usage remain available, but the container will stay unhealthy until delegated MCP registration is repaired."
     return 1
   fi
 
   write_claude_mcp_config "${mcp_name}" "${command_name}" "${command_args[@]}"
 
   if ! claude_config_has_mcp "${mcp_name}"; then
-    warn_claude_mcp_bootstrap "The AI Crowd could not register MCP '${mcp_name}' in '${claude_config_path}'. Delegated Claude workflows are unavailable, but shell access and direct CLI usage remain available."
+    warn_claude_mcp_bootstrap "The AI Crowd could not register MCP '${mcp_name}' in '${claude_config_path}'. Shell access and direct CLI usage remain available, but the container will stay unhealthy until delegated MCP registration is repaired."
     return 1
   fi
 
@@ -184,11 +184,11 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]];
   shopt -u nullglob
 fi
 
-# claude-delegator: register MCP servers (idempotent, non-fatal)
+# claude-delegator: register MCP servers (idempotent, non-fatal at boot, required for health)
 reset_claude_mcp_status
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if ! command -v claude >/dev/null 2>&1; then
-    warn_claude_mcp_bootstrap "The AI Crowd could not register delegated MCP servers because the Claude CLI is missing. Delegated Claude workflows and Claude CLI usage are unavailable, but shell access and direct Gemini/Codex CLI usage remain available."
+    warn_claude_mcp_bootstrap "The AI Crowd could not register delegated MCP servers because the Claude CLI is missing. Shell access and direct Gemini/Codex CLI usage remain available, but the container will stay unhealthy until Claude MCP registration can succeed."
   else
     codex_mcp_model="${CODEX_MCP_MODEL:-gpt-5.3-codex}"
     register_claude_mcp codex codex -m "${codex_mcp_model}" mcp-server || true

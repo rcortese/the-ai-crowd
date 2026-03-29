@@ -53,26 +53,28 @@ On each boot the entrypoint:
 2. Fails with exit `70` if mounted paths do not match the runtime UID and GID
 3. Applies default Git settings when they are missing
 4. Syncs `claude-delegator` rule files into the persisted Claude rules directory
-5. Attempts best-effort Claude MCP registration for Codex and Gemini
+5. Attempts Claude MCP registration for Codex and Gemini and records any bootstrap degradation
 
-Bootstrap warnings are recorded in `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`.
+Bootstrap status is recorded in `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`.
 
 ## Delegation
 
-Claude MCP registration is best-effort, not boot-critical.
+Claude MCP registration is non-fatal at boot, but required for a healthy runtime.
 
 - Codex registers through `codex -m "${CODEX_MCP_MODEL:-gpt-5.3-codex}" mcp-server`
 - Gemini registers through `/opt/claude-delegator/server/gemini/index.js`
 
-If registration fails, shell access and direct CLI usage still work.
+If registration fails, shell access and direct CLI usage still work, but the container remains unhealthy until the MCP state is repaired.
 
 ## Validation And Health Checks
 
 For a quick runtime validation:
 
 ```bash
+docker compose -f compose.yaml -f compose.build.yaml build the-ai-crowd
 bash scripts/ci/smoke.sh
 bash scripts/ci/healthcheck.sh
+bash scripts/ci/smoke-upgrade.sh
 ```
 
 The container healthcheck verifies:
@@ -81,7 +83,8 @@ The container healthcheck verifies:
 - bundled CLIs are on `PATH`
 - Git defaults are present
 - Docker mode matches the runtime socket state
-- delegated MCP registration issues are surfaced as warnings
+- delegated MCP rules, bridge files, and registrations are present
+- the bootstrap status file is empty
 
 ## Upgrades
 
@@ -112,7 +115,8 @@ Check:
 
 - `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`
 - `~/.claude.json` inside the container
-- whether `claude`, `codex`, and `node` are available on `PATH`
+- whether `claude`, `codex`, `gemini`, and `node` are available on `PATH`
+- whether `docker ps` shows the container as `healthy`, not just `Up`
 
 ### Docker commands fail inside the workbench
 

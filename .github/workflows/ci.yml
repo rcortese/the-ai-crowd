@@ -28,3 +28,6 @@ jobs:
 
       - name: Run healthcheck smoke tests
         run: bash scripts/ci/healthcheck.sh
+
+      - name: Run persisted-state recovery smoke tests
+        run: bash scripts/ci/smoke-upgrade.sh
