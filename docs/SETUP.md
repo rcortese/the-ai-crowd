@@ -15,7 +15,11 @@ Prepare these paths:
 
 Inside the container, they appear under `/home/$WORKBENCH_USER` and `/workspace/*`.
 
-## First-Time Setup
+## Path A: Pull-first (recommended)
+
+Use this path to run the published image without cloning the repository or building locally.
+
+**1. Create the state directories and config:**
 
 ```bash
 mkdir -p state/home state/projects state/references state/scratch state/ssh config
@@ -24,10 +28,40 @@ cp .env.example .env
 cp config/gitconfig.example config/gitconfig
 ```
 
-Edit:
+**2. Edit `.env`:**
 
-- `.env`
-- `config/gitconfig`
+Set `WORKBENCH_UID` and `WORKBENCH_GID` to match the owner of the `state/` tree, or container startup will fail (exit 70).
+
+Keep `WORKBENCH_USER=operator`. The published image has `USERNAME=operator` baked in; changing this value requires a local build (Path B).
+
+**3. Edit `config/gitconfig`.**
+
+**4. Pull and start:**
+
+```bash
+docker pull rcortese/the-ai-crowd:latest
+docker compose up -d
+docker exec -it the-ai-crowd bash -l
+```
+
+The container runs as the configured non-root user and starts in `/workspace/projects`.
+
+Build override variables (`NODE_VERSION`, `CLAUDE_CODE_VERSION`, etc.) in `.env` are ignored in this path.
+
+## Path B: Build from source (maintainers / custom builds)
+
+Use this path to modify the image, change pinned CLI versions, or change `WORKBENCH_USER`. Requires `compose.override.yaml` in the project root (included in the repository).
+
+**1.** Complete steps 1–3 from Path A.
+
+**2.** Uncomment the relevant build override variables in `.env`.
+
+**3.** Build and start:
+
+```bash
+docker compose -f compose.yaml -f compose.override.yaml up -d --build
+docker exec -it the-ai-crowd bash -l
+```
 
 ## Required `.env` Values
 
@@ -38,22 +72,11 @@ The minimum settings for first boot are:
 - `WORKBENCH_UID`
 - `WORKBENCH_GID`
 
-The UID and GID must match the owner of the bind-mounted `state/` tree or startup will fail.
-
-The same file also carries pinned build values for Node, the three AI CLIs, and `claude-delegator`, plus optional API keys:
+Optional API keys (required for the respective CLI to function):
 
 - `ANTHROPIC_API_KEY`
 - `GEMINI_API_KEY`
 - `OPENAI_API_KEY`
-
-## Build And Start
-
-```bash
-docker compose up -d --build
-docker exec -it the-ai-crowd bash -l
-```
-
-The container runs as the configured non-root user and starts in `/workspace/projects`.
 
 ## Optional Docker-Aware Overlay
 
