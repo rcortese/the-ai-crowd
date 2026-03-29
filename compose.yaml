@@ -1,20 +1,6 @@
 services:
   the-ai-crowd:
-    build:
-      context: .
-      args:
-        NODE_MAJOR: ${NODE_MAJOR:-20}
-        NODE_VERSION: ${NODE_VERSION:-20.20.1}
-        USERNAME: ${WORKBENCH_USER:-operator}
-        USER_UID: ${WORKBENCH_UID:-1000}
-        USER_GID: ${WORKBENCH_GID:-1000}
-        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-1.0.43}
-        GEMINI_CLI_VERSION: ${GEMINI_CLI_VERSION:-0.1.18}
-        CODEX_CLI_VERSION: ${CODEX_CLI_VERSION:-0.26.0}
-        CLAUDE_DELEGATOR_COMMIT: ${CLAUDE_DELEGATOR_COMMIT:-6c3535b642ce8ea352f7fac85d063f6b6d62253f}
-        CLAUDE_DELEGATOR_SHA256: ${CLAUDE_DELEGATOR_SHA256:-087d8f4254fadb607360df8f04a21ffb2cee042d2b6a355a7f99d44c53aef27f}
-        DOCKER_CE_CLI_VERSION: ${DOCKER_CE_CLI_VERSION:-}
-    image: the-ai-crowd:local
+    image: rcortese/the-ai-crowd:latest
     container_name: the-ai-crowd
     init: true
     restart: unless-stopped
