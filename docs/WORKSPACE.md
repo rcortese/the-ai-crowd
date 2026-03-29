@@ -19,22 +19,22 @@ The default working directory is `/workspace/projects`.
 
 The standard host layout is:
 
-- `state/home`
-- `state/projects`
-- `state/references`
-- `state/scratch`
-- `state/ssh`
-- `config`
+- `data/home`
+- `data/projects`
+- `data/references`
+- `data/scratch`
+- `data/ssh`
+- `data/config`
 
 These paths are mounted by [compose.yaml](../compose.yaml).
 
 ## Persistence
 
-Persistent state includes shell history, CLI auth, Git config, SSH material, and other operator state under `state/home`.
+Persistent state includes shell history, CLI auth, Git config, SSH material, and other operator state under `data/home`.
 
 Disposable work belongs in:
 
-- `state/scratch`
+- `data/scratch`
 - `/workspace/scratch`
 - tmpfs-backed runtime paths such as `/tmp` and `/run`
 

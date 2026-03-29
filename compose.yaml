@@ -22,10 +22,10 @@ services:
       - /tmp
       - /run
     volumes:
-      - ./state/home:/home/${WORKBENCH_USER:-operator}
-      - ./state/projects:/workspace/projects
-      - ./state/references:/workspace/references:ro
-      - ./state/scratch:/workspace/scratch
-      - ./config:/workspace/config:ro
-      - ./state/ssh:/home/${WORKBENCH_USER:-operator}/.ssh
+      - ./data/home:/home/${WORKBENCH_USER:-operator}
+      - ./data/projects:/workspace/projects
+      - ./data/references:/workspace/references:ro
+      - ./data/scratch:/workspace/scratch
+      - ./data/config:/workspace/config:ro
+      - ./data/ssh:/home/${WORKBENCH_USER:-operator}/.ssh
       - /etc/localtime:/etc/localtime:ro
