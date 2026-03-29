@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker compose -f compose.yaml build the-ai-crowd
+        run: docker compose -f compose.yaml -f compose.build.yaml build the-ai-crowd
 
       - name: Run runtime and delegation smoke tests
         run: bash scripts/ci/smoke.sh

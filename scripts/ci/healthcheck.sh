@@ -25,11 +25,13 @@ write_compose_override "${override_file}" "${container_name}"
 
 compose_base=(
   -f compose.yaml
+  -f compose.build.yaml
   -f docker-compose.ci.override.yml
 )
 
 compose_docker=(
   -f compose.yaml
+  -f compose.build.yaml
   -f compose.docker.yaml
   -f docker-compose.ci.override.yml
 )

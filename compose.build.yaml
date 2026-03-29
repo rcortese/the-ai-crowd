@@ -1,6 +1,6 @@
 # Maintainer / local-development override.
 # Enables local image builds without replacing the pulled distribution tag.
-# Usage: docker compose -f compose.yaml -f compose.override.yaml up -d --build
+# Usage: docker compose -f compose.yaml -f compose.build.yaml up -d --build
 services:
   the-ai-crowd:
     build:

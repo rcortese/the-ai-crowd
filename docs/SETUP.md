@@ -6,35 +6,35 @@ This guide covers first-time setup. Keep architecture questions in [ARCHITECTURE
 
 Prepare these paths:
 
-- `state/home`
-- `state/projects`
-- `state/references`
-- `state/scratch`
-- `state/ssh`
-- `config`
+- `data/home`
+- `data/projects`
+- `data/references`
+- `data/scratch`
+- `data/ssh`
+- `data/config`
 
 Inside the container, they appear under `/home/$WORKBENCH_USER` and `/workspace/*`.
 
 ## Path A: Pull-first (recommended)
 
-Use this path to run the published image without cloning the repository or building locally.
+Use this path to run the published image without triggering a local build.
 
 **1. Create the state directories and config:**
 
 ```bash
-mkdir -p state/home state/projects state/references state/scratch state/ssh config
-chown -R "$(id -u):$(id -g)" state
+mkdir -p data/home data/projects data/references data/scratch data/ssh data/config
+chown -R "$(id -u):$(id -g)" data
 cp .env.example .env
-cp config/gitconfig.example config/gitconfig
+cp data/config/gitconfig.example data/config/gitconfig
 ```
 
 **2. Edit `.env`:**
 
-Set `WORKBENCH_UID` and `WORKBENCH_GID` to match the owner of the `state/` tree, or container startup will fail (exit 70).
+Set `WORKBENCH_UID` and `WORKBENCH_GID` to match the owner of the `data/` tree, or container startup will fail (exit 70).
 
 Keep `WORKBENCH_USER=operator`. The published image has `USERNAME=operator` baked in; changing this value requires a local build (Path B).
 
-**3. Edit `config/gitconfig`.**
+**3. Edit `data/config/gitconfig`.**
 
 **4. Pull and start:**
 
@@ -50,7 +50,9 @@ Build override variables (`NODE_VERSION`, `CLAUDE_CODE_VERSION`, etc.) in `.env`
 
 ## Path B: Build from source (maintainers / custom builds)
 
-Use this path to modify the image, change pinned CLI versions, or change `WORKBENCH_USER`. Requires `compose.override.yaml` in the project root (included in the repository).
+Use this path to modify the image, change pinned CLI versions, or change `WORKBENCH_USER`. Requires `compose.build.yaml` in the project root (included in the repository).
+
+Migration note: if you previously used `compose.override.yaml`, replace it with `compose.build.yaml` in local build commands.
 
 **1.** Complete steps 1–3 from Path A.
 
@@ -59,7 +61,7 @@ Use this path to modify the image, change pinned CLI versions, or change `WORKBE
 **3.** Build and start:
 
 ```bash
-docker compose -f compose.yaml -f compose.override.yaml up -d --build
+docker compose -f compose.yaml -f compose.build.yaml up -d --build
 docker exec -it the-ai-crowd bash -l
 ```
 

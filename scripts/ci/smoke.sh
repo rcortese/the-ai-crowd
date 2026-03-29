@@ -19,10 +19,21 @@ write_compose_override "${override_file}" "${container_name}"
 
 compose_files=(
   -f compose.yaml
+  -f compose.build.yaml
   -f docker-compose.ci.override.yml
 )
 
 export COMPOSE_PROJECT_NAME="${compose_project}"
+
+dockerfile_arg_default() {
+  local arg_name="$1"
+  awk -F= -v arg_name="${arg_name}" '
+    $1 == "ARG " arg_name {
+      print $2
+      exit
+    }
+  ' Dockerfile
+}
 
 cleanup() {
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
@@ -38,14 +49,14 @@ compose_config_json="$(docker compose "${compose_files[@]}" config --format json
 config_user="$(jq -r '.services["the-ai-crowd"].user' <<< "${compose_config_json}")"
 expected_uid="${config_user%%:*}"
 expected_gid="${config_user##*:}"
-expected_gemini_version="$(jq -r '.services["the-ai-crowd"].build.args.GEMINI_CLI_VERSION' <<< "${compose_config_json}")"
-expected_claude_version="$(jq -r '.services["the-ai-crowd"].build.args.CLAUDE_CODE_VERSION' <<< "${compose_config_json}")"
-expected_codex_version="$(jq -r  '.services["the-ai-crowd"].build.args.CODEX_CLI_VERSION'   <<< "${compose_config_json}")"
+expected_gemini_version="$(dockerfile_arg_default GEMINI_CLI_VERSION)"
+expected_claude_version="$(dockerfile_arg_default CLAUDE_CODE_VERSION)"
+expected_codex_version="$(dockerfile_arg_default CODEX_CLI_VERSION)"
 
 [[ -z "${expected_claude_version}" || "${expected_claude_version}" == "null" ]] \
-  && { printf 'ERROR: CLAUDE_CODE_VERSION missing from compose build args\n' >&2; exit 1; }
+  && { printf 'ERROR: CLAUDE_CODE_VERSION missing from Dockerfile ARG defaults\n' >&2; exit 1; }
 [[ -z "${expected_codex_version}"  || "${expected_codex_version}"  == "null" ]] \
-  && { printf 'ERROR: CODEX_CLI_VERSION missing from compose build args\n' >&2; exit 1; }
+  && { printf 'ERROR: CODEX_CLI_VERSION missing from Dockerfile ARG defaults\n' >&2; exit 1; }
 
 docker compose "${compose_files[@]}" up -d --no-build "${service}"
 

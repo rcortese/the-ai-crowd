@@ -12,22 +12,21 @@ prepare_temp_repo_fixture() {
   local temp_repo="$1"
 
   mkdir -p "${temp_repo}"
-  cp compose.yaml compose.docker.yaml Dockerfile README.md "${temp_repo}/"
-  cp -r docs "${temp_repo}/"
-  cp -r scripts config .dockerignore .gitignore .github "${temp_repo}/"
+  cp compose.yaml compose.build.yaml compose.docker.yaml Dockerfile README.md "${temp_repo}/"
+  cp -r docs data scripts .dockerignore .gitignore .github "${temp_repo}/"
   mkdir -p \
-    "${temp_repo}/state/home" \
-    "${temp_repo}/state/projects" \
-    "${temp_repo}/state/references" \
-    "${temp_repo}/state/scratch" \
-    "${temp_repo}/state/ssh"
+    "${temp_repo}/data/home" \
+    "${temp_repo}/data/projects" \
+    "${temp_repo}/data/references" \
+    "${temp_repo}/data/scratch" \
+    "${temp_repo}/data/ssh"
 
   chmod 0777 \
-    "${temp_repo}/state/home" \
-    "${temp_repo}/state/projects" \
-    "${temp_repo}/state/references" \
-    "${temp_repo}/state/scratch" \
-    "${temp_repo}/state/ssh"
+    "${temp_repo}/data/home" \
+    "${temp_repo}/data/projects" \
+    "${temp_repo}/data/references" \
+    "${temp_repo}/data/scratch" \
+    "${temp_repo}/data/ssh"
 }
 
 # compose_files and service are caller-set globals

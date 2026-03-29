@@ -26,9 +26,10 @@ Default workspace paths inside the container:
 
 ```bash
 cp .env.example .env
-mkdir -p state/home state/projects state/references state/scratch state/ssh config
-chown -R "$(id -u):$(id -g)" state
-cp config/gitconfig.example config/gitconfig
+mkdir -p data/home data/projects data/references data/scratch data/ssh data/config
+chown -R "$(id -u):$(id -g)" data
+cp data/config/gitconfig.example data/config/gitconfig
+docker pull rcortese/the-ai-crowd:latest
 docker compose up -d
 docker exec -it the-ai-crowd bash -l
 ```
@@ -51,6 +52,8 @@ codex
 
 ## Notes
 
-- `state/` must be writable by `WORKBENCH_UID:WORKBENCH_GID` or startup fails
+- `data/` must be writable by `WORKBENCH_UID:WORKBENCH_GID` or startup fails
 - Docker-aware mode is optional; the image already includes the `docker` CLI, and the overlay adds socket and group access
+- Local builds are opt-in through `compose.build.yaml`; plain `docker compose up -d` stays pull-first
+- Existing local-build workflows must switch from `compose.override.yaml` to `compose.build.yaml`
 - AI CLI versions are pinned in the image (see `Dockerfile` ARG defaults); `docker-ce-cli` can also be pinned explicitly through `DOCKER_CE_CLI_VERSION` when building locally
