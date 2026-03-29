@@ -1,110 +1,74 @@
-# GUIDELINES
+# Guidelines
 
-This document records the project rules. Keep setup in [README.md](../README.md) and [SETUP.md](SETUP.md). Keep architectural framing in [ARCHITECTURE.md](ARCHITECTURE.md).
+This document records maintainer rules and project invariants. It is not the primary onboarding document. Start with [README.md](../README.md) or [SETUP.md](SETUP.md) if you are using the workbench; read this file when changing the image, runtime shape, or project policy.
 
-## Position
+## Product Invariants
 
-The AI Crowd is a single internal AI environment. It is:
+- The project remains `The AI Crowd`
+- The baseline stays single-container
+- Claude Code remains the orchestrator
+- Gemini CLI and Codex CLI remain local supporting workers
+- Persistent operator state remains outside the image
+- Docker support stays optional
+- The runtime stays terminal-first
 
-- terminal-first
-- Claude-led
-- persistent
-- limited to curated mounts
-- high-trust, but not careless
-- usable with or without Docker access
-
-It is not a distributed platform, browser-first IDE, zero-trust sandbox, or mutable pet container.
-
-## Core Rules
-
-### Base image
+## Base Runtime Rules
 
 - Use `Ubuntu 24.04 LTS`
-- Do not use Alpine
+- Do not switch to Alpine
+- Install core CLIs during image build, not at container startup
+- Pin tool versions explicitly
+- Treat the image as the source of truth for the runtime toolchain
 
-### Tool installation
-
-- Install Claude Code, Gemini CLI, and Codex CLI in the image build
-- Standardize on pinned Node.js 20 LTS in the image
-- Pin versions explicitly
-- Do not install or update core tools at container startup
-- The image is the source of truth for the runtime
-
-### Authentication
+## Authentication And Secrets
 
 - OAuth is the default interactive path
 - API keys are the non-interactive fallback
-- Secrets are injected at runtime
-- Secrets do not belong in the image
+- Inject secrets at runtime
+- Do not bake secrets into the image
 
-### Updates
+## Update Model
 
-- Update through deliberate image rebuilds
-- Do not rely on floating `latest`
-- Do not self-update inside the running container
+- Upgrade through deliberate image pulls or rebuilds
+- Do not rely on in-container self-mutation
+- Do not let the running container become the source of truth
+- Keep reproducible build inputs for pinned components such as `claude-delegator`
 
-### Persistence
+`latest` may exist as a convenience distribution tag, but maintainers should preserve a path to reproducible, intentional version pinning.
 
-Persistent state includes:
-
-- shell config and history
-- Git config and credentials
-- SSH material
-- CLI auth and config state
-- user preferences and dotfiles
-
-Disposable state includes caches, temp files, and rebuildable downloads.
-
-### Workspace shape
+## Workspace And Mount Policy
 
 - Use curated mounts only
-- Mount active repositories read-write
-- Mount reference material read-only
+- Keep active repositories read-write
+- Keep reference material read-only
 - Keep scratch separate from durable state
 - Do not mount the whole host for convenience
 
-### Delegation
+## Delegation Policy
 
-- Claude Code is the orchestrator
+- Claude Code is the primary orchestrator
 - Gemini CLI and Codex CLI are local workers and fallbacks
-- Prefer local-first orchestration through shared filesystem and stdio MCP
-- Do not add internal service sprawl without a clear need
+- Prefer local-first delegation through shared filesystem context and stdio MCP
+- Do not add internal service sprawl without a clear operational benefit
 
-### Access model
-
-- CLI-first is the baseline
-- Shell access is the primary interface
-- A web terminal is optional later
-- A browser IDE is not a phase-one requirement
-
-### Docker capability
-
-- Docker access is optional
-- The system must remain valid without Docker integration
-- If enabled, treat Docker as an explicit trust expansion
-
-### Security posture
+## Security Posture
 
 - Run as a non-root user
 - Drop unnecessary Linux capabilities
 - Enable `no-new-privileges`
 - Keep writable paths explicit
-- Use curated mounts and tmpfs for transient areas
+- Use `tmpfs` for transient areas
 
-Aim for practical containment, not hardening theater that breaks the workstation feel.
+Aim for practical containment, not hardening theater that breaks the workstation model.
 
-### Toolchain baseline
-
-The base environment should include the normal shell, Git, search, editing, archive, diagnostics, and build tools needed for daily operator work. Add niche tooling only when it is actually needed.
-
-### Recoverability
+## Recoverability
 
 - Prefer Git as the main recovery boundary
 - Keep persistent operator state outside the image
 - Rebuild containers instead of mutating them ad hoc
-- Use frequent checkpoints during AI-driven work
+- Use frequent checkpoints during AI-assisted work
 
-### CI conventions
+## CI Conventions
 
 - `scripts/ci/lib.sh`: shared helpers
 - `scripts/ci/smoke.sh`: runtime and delegation smoke coverage
@@ -114,17 +78,13 @@ Keep workflow responsibilities narrow:
 
 - `lint.yml`: static checks only
 - `ci.yml`: image build, smoke coverage, and healthcheck coverage
-- `publish-dockerhub.yml`: tag-triggered publication only
+- `publish-dockerhub.yml`: publication only
 
-## Non-Negotiable Rules
+## Non-Negotiables
 
 - Do not use Alpine
-- Do not update tool versions at startup
+- Do not install or update core tools at startup
 - Do not mount the whole host
 - Do not make Docker foundational
-- Do not put secrets in the image
-- Do not let the live container become the source of truth
-
-## Final Directive
-
-Build The AI Crowd as a single, persistent, terminal-first, Ubuntu-based operator environment with pinned tool versions, curated mounts, non-root execution, Claude-led orchestration, optional Docker capability, and Git-centered recoverability.
+- Do not store secrets in the image
+- Do not treat the live container as the canonical runtime definition

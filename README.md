@@ -4,59 +4,67 @@
 
 # The AI Crowd
 
+The AI Crowd is a single-container AI workbench for terminal-first development. It bundles Claude Code, Gemini CLI, and Codex CLI into one persistent operator environment so you can keep auth, shell history, SSH material, and project state across restarts.
+
+It is designed for technical users who want Claude to remain the primary orchestrator while Gemini and Codex stay available as local workers and fallbacks.
+
 <p align="center">
-  <img src="docs/the-it-crowd.png" alt="The AI Crowd" width="600">
+  <img src="docs/the-it-crowd.png" alt="The AI Crowd" width="480">
 </p>
 
-**Boost Claude Code. Delegate to Gemini & Codex.**
+## What You Get
 
-Your terminal-first AI workbench, pre-configured so Claude Code orchestrates while Gemini CLI and Codex CLI handle delegated tasks — all in one persistent Docker container.
+- One container with Claude Code, Gemini CLI, Codex CLI, Git, SSH, and daily shell tooling already installed
+- Persistent state through host bind mounts instead of mutable container snowflakes
+- Local-first delegation through `claude-delegator`, which registers Gemini and Codex as stdio MCP workers for Claude
+- An optional Docker-aware overlay when the workbench needs to talk to the host Docker daemon
 
-*Inspired by The IT Crowd, this is your desktop support for AI: always on, always ready.*
+## Good Fit
 
-**Best for**
-- Developers who use Claude Code all day and hit usage limits
-- AI users who want one terminal with multiple coding CLIs already wired together
-- Homelabbers who would rather run one container than install and maintain each tool separately
+- You spend most of the day in a terminal and want multiple coding CLIs ready in one place
+- You want a persistent operator workspace instead of reinstalling tools on each machine
+- You want local delegation and shared filesystem context, not a browser IDE or multi-service platform
 
-**Not for**
-- Single-model workflows
-- Hosted IDE users
-- Anyone who does not want to manage Docker or local CLI auth
+## How It Works
 
-**Why use The AI Crowd?**
-- **Slash token costs:** Route heavy tasks to Gemini or Codex, reducing your Claude token spend.
-- **Persistent environment:** Your auth, SSH keys, Git config, and history survive container restarts.
-- **Instant setup:** Everything's pre-configured, from MCP registration to pinned CLI versions.
-- **Run anywhere:** Seamlessly deploy on Unraid, NAS, or any Docker-compatible host.
-- **Own your data:** Keep your AI interactions and data strictly on your infrastructure.
+| Layer | What happens |
+| --- | --- |
+| Runtime | One Ubuntu 24.04 container runs all bundled CLIs |
+| State | `data/home`, `data/projects`, `data/references`, `data/scratch`, and `data/ssh` persist on the host |
+| Delegation | Claude can register Codex and Gemini as local stdio MCP workers at startup |
+| Security shape | Non-root user, all Linux capabilities dropped, `no-new-privileges`, and `tmpfs` for `/tmp` and `/run` |
+| Docker mode | Optional Compose overlay mounts `/var/run/docker.sock` and adds the Docker group |
 
 ## Quick Start
-Create the bind-mount directories first and ensure they are owned by the same UID and GID you plan to run inside the container.
+
+Prepare the bind mounts and copy the sample environment file:
 
 ```bash
-mkdir -p data/home data/projects data/references data/scratch data/ssh data/config
+mkdir -p data/home data/projects data/references data/scratch data/ssh
 chown -R "$(id -u):$(id -g)" data
-```
-
-Copy the environment file, then edit `.env` and set `TZ`, `WORKBENCH_UID`, and `WORKBENCH_GID`.
-
-```bash
 cp .env.example .env
 ```
 
-Copy the Git config template, edit `config/gitconfig` to match your Git identity, then start the workbench and open a login shell inside the container.
+Edit `.env` and set at least:
+
+- `TZ`
+- `WORKBENCH_UID`
+- `WORKBENCH_GID`
+
+If you want a pre-seeded Git config before first boot, copy the sample into the persistent home mount:
 
 ```bash
-cp config/gitconfig.example config/gitconfig
+cp docs/gitconfig.example data/home/.gitconfig
 ```
+
+Start the published image and open a login shell:
 
 ```bash
 docker compose up -d
 docker exec -it the-ai-crowd bash -l
 ```
 
-Authenticate the installed CLIs from inside the container.
+Authenticate the bundled CLIs from inside the container:
 
 ```bash
 claude auth login
@@ -64,41 +72,42 @@ gemini auth
 codex
 ```
 
-If you need Docker access from inside the workbench, start it with the Docker-aware overlay instead.
+If you need Docker access from inside the workbench, restart with the Docker-aware overlay:
 
 ```bash
 docker compose -f compose.yaml -f compose.docker.yaml up -d
 ```
 
-## Configuration
-At minimum, `.env` must define `TZ`, `WORKBENCH_UID`, and `WORKBENCH_GID`. The container user name is fixed as `operator` for pull-first use, so host alignment is handled through UID and GID mapping rather than by changing the account name.
+## Modes
 
-Before first use, copy `config/gitconfig.example` to `config/gitconfig` and edit it to match the Git identity you want available inside the workbench.
+| Mode | When to use it | Command |
+| --- | --- | --- |
+| Pull-first | Default path for normal users | `docker compose up -d` |
+| Build from source | Maintain the image, change pinned versions, or change `WORKBENCH_USER` | `docker compose -f compose.yaml -f compose.build.yaml up -d --build` |
+| Docker-aware | Let the container talk to the host Docker daemon | `docker compose -f compose.yaml -f compose.docker.yaml up -d` |
 
-Docker-aware mode is optional. To use it, set `DOCKER_CE_CLI_VERSION` in `.env` and start the stack with the Docker overlay:
+## Persistence At A Glance
 
-```bash
-docker compose -f compose.yaml -f compose.docker.yaml up -d
-```
+| Host path | Container path | Purpose |
+| --- | --- | --- |
+| `data/home` | `/home/${WORKBENCH_USER}` | Shell history, CLI auth, Git config, and user state |
+| `data/projects` | `/workspace/projects` | Active repositories |
+| `data/references` | `/workspace/references` | Reference material mounted read-only |
+| `data/scratch` | `/workspace/scratch` | Durable scratch space |
+| `data/ssh` | `/home/${WORKBENCH_USER}/.ssh` | SSH keys and SSH config |
 
-## Persistence
-The workbench keeps state through bind mounts on the host.
+If the owner of `data/` does not match `WORKBENCH_UID:WORKBENCH_GID`, startup fails with exit `70`.
 
-| Host path | Container path | What persists |
-|---|---|---|
-| `data/home` | user home inside the container | auth state, shell history, and user-level CLI state |
-| `data/projects` | `/workspace/projects` | working repositories and project files |
-| `data/references` | `/workspace/references` | reference material |
-| `data/scratch` | `/workspace/scratch` | disposable working files that still need to survive restarts |
-| `data/ssh` | SSH material inside the container | SSH keys and related config |
-| `data/config` | `/workspace/config` | workbench-side configuration |
+## Trust Boundary
 
-## Important Considerations
-- `data/` ownership is not optional: if directories are not owned by `WORKBENCH_UID:WORKBENCH_GID`, the container exits with status `70`
-- Docker-aware mode is opt-in — use overlay only if you need Docker access from inside the workbench
-- Container runs as non-root user, drops capabilities, sets `no-new-privileges`, uses `tmpfs` for `/tmp` and `/run`
+The AI Crowd is a high-trust operator environment, not a sandbox for untrusted workloads. The base runtime narrows the container with non-root execution, dropped capabilities, and explicit writable paths, but the container can still read and edit the repositories you mount. Enabling Docker-aware mode intentionally expands that trust boundary to the host Docker daemon.
 
-## Docs
-- [Setup guide](docs/SETUP.md)
-- [Operations guide](docs/OPERATIONS.md)
-- [Workspace guide](docs/WORKSPACE.md)
+## Documentation Map
+
+Read in this order if you are onboarding:
+
+1. [Setup](docs/SETUP.md) for bootstrap, `.env`, published-image flow, local builds, and Docker-aware mode
+2. [Operations](docs/OPERATIONS.md) for authentication, daily commands, upgrades, validation, and troubleshooting
+3. [Architecture](docs/ARCHITECTURE.md) for runtime model, delegation, trust boundaries, and startup behavior
+4. [Workspace](docs/WORKSPACE.md) for host/container paths and persistence boundaries
+5. [Guidelines](docs/GUIDELINES.md) for maintainer rules and project invariants

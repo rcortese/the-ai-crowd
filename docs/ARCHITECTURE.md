@@ -1,60 +1,85 @@
-# The AI Crowd
+# Architecture
 
-## Purpose
+Use this document to understand the runtime model and design boundaries. For setup steps, read [SETUP.md](SETUP.md). For day-to-day use, read [OPERATIONS.md](OPERATIONS.md). For maintainer doctrine, read [GUIDELINES.md](GUIDELINES.md).
 
-This document describes the architecture and boundaries of the project. For setup and day-to-day use, see [README.md](../README.md). For project rules, see [GUIDELINES.md](GUIDELINES.md).
+## Core Model
 
-## Summary
+The AI Crowd is a single, persistent operator environment:
 
-The AI Crowd is a single internal engineering environment. It centralizes:
+- one Ubuntu 24.04 container
+- one shared shell and filesystem context
+- one persistent home directory for operator state
+- one curated workspace split across projects, references, and scratch
+- one Claude-led delegation path to Gemini CLI and Codex CLI
 
-- Claude Code as the primary orchestrator
-- Gemini CLI and Codex CLI as local workers
-- a shared shell and toolchain
-- persistent operator state
-- curated project access
-- optional Docker awareness
+The design prefers local-first coordination over service sprawl, browser IDE flows, or multi-container orchestration.
 
-The design favors a simple, local-first runtime over multi-container orchestration or browser-based workflows.
+## Runtime Shape
 
-## Runtime Model
+### One container, shared context
 
-- One container contains all three AI CLIs
-- One shared filesystem and shell context is the handoff boundary
-- One persistent home directory stores auth, config, shell history, and operator state
-- One workspace view exposes only the projects and references relevant to the task
+All bundled CLIs run inside the same container and see the same mounted files. That shared filesystem is the handoff boundary between tools.
 
-Local delegation is preferred. `claude-delegator` registers Gemini and Codex as stdio MCP workers, so Claude can delegate work without separate network services.
+### Persistent operator state
 
-## Filesystem And State
+`data/home` persists shell history, CLI auth, Git configuration, Claude config, and other user-level state. This is a durable workbench, not a disposable task runner.
 
-The container uses:
+### Curated workspace mounts
 
-- persistent user state
-- curated mounts for active projects
-- read-only mounts for references
-- scratch space for disposable work
+- `/workspace/projects` is for active repositories
+- `/workspace/references` is for read-only reference material
+- `/workspace/scratch` is for durable but disposable working files
 
-This is a durable operator workspace, not a stateless worker.
+The model is intentionally narrower than mounting the entire host.
+
+## Delegation Model
+
+Claude Code remains the primary orchestrator. At startup, `claude-delegator` is used to register:
+
+- Codex through `codex ... mcp-server`
+- Gemini through the delegator Node bridge
+
+This keeps delegation local:
+
+- no extra internal services
+- no separate worker containers
+- no additional network boundary for normal handoffs
+
+If bootstrap fails, the environment degrades to direct CLI usage instead of failing to start.
+
+## Startup Contract
+
+The entrypoint is responsible for the operational baseline:
+
+1. ensure required directories exist and are writable
+2. fail fast on UID:GID mismatches for mounted paths
+3. normalize SSH permissions
+4. apply default Git settings when they are unset
+5. sync delegated Claude rules into persisted state
+6. attempt best-effort MCP registration for Codex and Gemini
+
+That startup contract explains why the image is the source of truth for tooling while state stays outside the image.
 
 ## Docker Capability
 
-Docker integration is optional.
+Docker support is optional and additive.
 
-- Standard mode: files, repos, shell tools, and local delegation only
-- Docker-aware mode: adds Docker socket and group access
+- Standard mode exposes files, repos, shell tools, and local delegation only
+- Docker-aware mode mounts `/var/run/docker.sock` and adds the host Docker group
 
-Docker is an extra capability, not the core identity of the project.
+The `docker` CLI can exist in the image without making host daemon access mandatory. The overlay is the capability switch.
 
-## Git And Trust Model
+## Trust And Security Boundary
 
-- SSH is the default Git path
-- GitHub SSH host keys are pinned in the image
-- The environment is high-trust and operator-supervised
-- The container can read and edit mounted files broadly
-- Docker access, when enabled, is an intentional trust expansion
+The AI Crowd is not a zero-trust sandbox.
 
-This project is not intended for untrusted workloads or multi-tenant isolation.
+- It runs as a non-root user
+- It drops all Linux capabilities
+- It enables `no-new-privileges`
+- It uses `tmpfs` for `/tmp` and `/run`
+- It keeps writable paths explicit
+
+Those controls narrow the runtime, but they do not change the trust model: the container can still access the repositories and state you mount. Docker-aware mode expands trust further because the host Docker daemon becomes reachable.
 
 ## Scope
 
@@ -62,23 +87,13 @@ The AI Crowd is meant for:
 
 - AI-assisted coding sessions
 - repository analysis and modification
-- delegated local worker flows
-- project-oriented shell work
-- optional Docker-aware operator tasks
+- terminal-first operator work
+- local delegated worker flows
+- optional Docker-aware maintenance tasks
 
 It is not meant to be:
 
 - a distributed AI platform
 - a browser-first IDE
-- a zero-trust sandbox
+- a multi-tenant sandbox
 - a host-wide administration replacement
-
-## Constraints
-
-- Project name: `The AI Crowd`
-- Single-container baseline
-- Claude-led orchestration
-- Gemini and Codex as local supporting workers
-- Persistent state is required
-- Filesystem access stays curated
-- Docker access stays optional

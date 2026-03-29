@@ -1,12 +1,13 @@
 # Operations Guide
 
-This guide covers normal use after the container exists.
+Use this document after the container already exists. For initial bootstrap, read [SETUP.md](SETUP.md). For runtime internals and trust boundaries, read [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Common Commands
+## Daily Commands
 
 ```bash
 docker compose up -d
 docker exec -it the-ai-crowd bash -l
+docker compose down
 docker compose -f compose.yaml -f compose.build.yaml up -d --build
 docker compose -f compose.yaml -f compose.docker.yaml up -d
 bash scripts/ci/smoke.sh
@@ -15,60 +16,108 @@ bash scripts/ci/healthcheck.sh
 
 ## Authentication
 
-OAuth is the default interactive path. API keys from `.env` are the headless fallback.
+OAuth is the default interactive path. API keys from `.env` are the non-interactive fallback.
 
-| CLI | Interactive command | API key |
+| CLI | Interactive command | API key fallback |
 | --- | --- | --- |
 | Claude Code | `claude auth login` | `ANTHROPIC_API_KEY` |
 | Gemini CLI | `gemini auth` | `GEMINI_API_KEY` |
 | Codex CLI | `codex` | `OPENAI_API_KEY` |
 
-Auth state persists under `data/home`, usually in `~/.config`.
+Auth state normally persists under `data/home`, usually below `~/.config`.
 
 ## Git And SSH
 
-- SSH is the preferred Git path
-- Put key material under `data/ssh`
-- Verify access with `ssh -T git@github.com`
+- Put SSH keys and SSH config under `data/ssh`
+- Verify GitHub SSH access with `ssh -T git@github.com`
 - The image ships pinned GitHub host keys in `/etc/ssh/ssh_known_hosts`
 
-On startup, the entrypoint normalizes SSH permissions:
+At startup, the entrypoint normalizes SSH permissions:
 
 - `~/.ssh` -> `700`
 - `*.pub`, `known_hosts`, `config` -> `644`
 - other SSH files -> `600`
 
-If you prefer GitHub CLI:
+If you prefer GitHub CLI for Git auth:
 
 ```bash
 gh auth login
 gh auth setup-git
 ```
 
-## Runtime Defaults
+## Startup Behavior That Affects Operations
 
-When unset, the entrypoint applies:
+On each boot the entrypoint:
 
-- `init.defaultBranch=main`
-- `pull.rebase=false`
-- `core.editor=vim`
+1. Ensures the expected home and workspace paths exist and are writable
+2. Fails with exit `70` if mounted paths do not match the runtime UID and GID
+3. Applies default Git settings when they are missing
+4. Syncs `claude-delegator` rule files into the persisted Claude rules directory
+5. Attempts best-effort Claude MCP registration for Codex and Gemini
 
-Git config lives at `~/.gitconfig` inside `data/home` and persists across restarts.
+Bootstrap warnings are recorded in `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`.
 
 ## Delegation
 
-Claude MCP bootstrap is best-effort:
+Claude MCP registration is best-effort, not boot-critical.
 
-- `codex` registers through `codex -m gpt-5.3-codex mcp-server`
-- `gemini` registers through `/opt/claude-delegator/server/gemini/index.js`
+- Codex registers through `codex -m "${CODEX_MCP_MODEL:-gpt-5.3-codex}" mcp-server`
+- Gemini registers through `/opt/claude-delegator/server/gemini/index.js`
 
-Bootstrap status is written to `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`.
+If registration fails, shell access and direct CLI usage still work.
+
+## Validation And Health Checks
+
+For a quick runtime validation:
+
+```bash
+bash scripts/ci/smoke.sh
+bash scripts/ci/healthcheck.sh
+```
+
+The container healthcheck verifies:
+
+- expected directories exist
+- bundled CLIs are on `PATH`
+- Git defaults are present
+- Docker mode matches the runtime socket state
+- delegated MCP registration issues are surfaced as warnings
+
+## Upgrades
+
+### Pull-first workflow
+
+```bash
+docker pull rcortese/the-ai-crowd:latest
+docker compose up -d
+```
+
+### Local-build workflow
+
+```bash
+docker compose -f compose.yaml -f compose.build.yaml up -d --build
+```
+
+The running container is not meant to self-update. Upgrade through a fresh image pull or rebuild.
 
 ## Troubleshooting
 
-- Startup fails with a permissions error:
-  `WORKBENCH_UID` or `WORKBENCH_GID` does not match the owner of `data/`
-- Delegated MCP workflows are missing:
-  check `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`
-- Docker-aware mode is confusing:
-  the image already includes the `docker` CLI; the overlay mounts the socket and group so the container can talk to the host daemon
+### Container exits with status `70`
+
+`WORKBENCH_UID` or `WORKBENCH_GID` does not match the owner of the `./data` tree. Fix host ownership and start again.
+
+### Claude does not show delegated workers
+
+Check:
+
+- `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`
+- `~/.claude.json` inside the container
+- whether `claude`, `codex`, and `node` are available on `PATH`
+
+### Docker commands fail inside the workbench
+
+The base image includes the `docker` CLI, but Docker daemon access only exists when you start with `compose.docker.yaml` and pass the correct `DOCKER_GID`.
+
+### Git identity looks wrong
+
+Inspect `data/home/.gitconfig`. If you want a clean baseline, copy `docs/gitconfig.example` over it and re-enter the container.
