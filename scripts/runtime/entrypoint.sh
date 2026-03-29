@@ -40,24 +40,46 @@ claude_config_has_mcp() {
   jq -e --arg mcp_name "${mcp_name}" '.mcpServers[$mcp_name] != null' "${claude_config_path}" >/dev/null 2>&1
 }
 
+write_claude_config_json() {
+  local jq_filter="$1"
+  local source_path="${2:-}"
+  local tmp_config
+
+  tmp_config="$(mktemp)"
+
+  if [[ -n "${source_path}" ]]; then
+    jq "${jq_filter}" "${source_path}" > "${tmp_config}"
+  else
+    jq -n "${jq_filter}" > "${tmp_config}"
+  fi
+
+  mv "${tmp_config}" "${claude_config_path}"
+}
+
+normalize_claude_config_filter='
+  if type == "object" then . else {} end |
+  .mcpServers = (
+    if (.mcpServers | type) == "object" then
+      .mcpServers
+    else
+      {}
+    end
+  )'
+
 bootstrap_claude_config() {
   mkdir -p "${home_dir}"
 
   if [[ -s "${claude_config_path}" ]] && jq -e . "${claude_config_path}" >/dev/null 2>&1; then
+    write_claude_config_json "${normalize_claude_config_filter}" "${claude_config_path}"
     return 0
   fi
 
   if [[ -s "${claude_config_backup_path}" ]] && jq -e . "${claude_config_backup_path}" >/dev/null 2>&1; then
-    cp "${claude_config_backup_path}" "${claude_config_path}"
+    write_claude_config_json "${normalize_claude_config_filter}" "${claude_config_backup_path}"
     return 0
   fi
 
-  rm -f "${claude_config_path}"
-  if ! timeout 15 claude --version >/dev/null 2>&1; then
-    return 1
-  fi
-
-  [[ -s "${claude_config_path}" ]] && jq -e . "${claude_config_path}" >/dev/null 2>&1
+  write_claude_config_json '{mcpServers: {}}'
 }
 
 write_claude_mcp_config() {
