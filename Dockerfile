@@ -20,7 +20,8 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     TZ=UTC \
     SHELL=/bin/bash \
-    HOME=/home/${USERNAME}
+    HOME=/home/${USERNAME} \
+    GEMINI_FORCE_FILE_STORAGE=true
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
