@@ -63,7 +63,7 @@ docker compose "${compose_files[@]}" up -d --no-build "${service}"
 container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 [[ -n "${container_id}" ]]
 
-docker inspect -f '{{.State.Running}}' "${container_id}" | grep -qx true
+docker inspect --format '{{.State.Running}}' "${container_id}" | grep -qx true
 
 wait_for_service_ready
 
