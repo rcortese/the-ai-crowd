@@ -2,42 +2,76 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Changed
-
-- Bump Node.js to `20.20.2` (latest stable).
-- Bump Codex CLI to `0.118.0` (latest stable).
-- Bump all GitHub Actions to their latest major versions (`actions/checkout@v6`, `docker/*@vX`, etc.).
-
-## [0.2.0] - 2026-03-24
-
-### Added
-
-- Multi-model delegation via `claude-delegator` baked into the image for zero-config MCP delegation to Gemini and Codex.
-- GitHub SSH host keys pinned in the image for stronger supply-chain safety during Git operations.
-- SHA256 integrity verification of the `claude-delegator` tarball at build time.
-- A dedicated lint workflow that enforces `shellcheck` across project scripts.
+## [0.3.1] - 2026-03-31
 
 ### Changed
-
-- SSH is now the default Git authentication path, avoiding token expiry and working cleanly with hardware-backed keys.
-- MCP bootstrap is decoupled from the boot critical path so startup degrades with warnings instead of failing fast.
-- CI workflows are split into distinct lint, CI, and publish scopes.
-- Shared CI fixtures were extracted into `scripts/ci/lib.sh`.
-- Node.js is pinned to the exact `20.20.1` release instead of a major-only pin.
+- Updated Node.js to 20.20.2 and Codex CLI to 0.118.0
+- Upgraded GitHub Actions to major releases
+- Removed git SHA tags from Docker Hub metadata
 
 ### Fixed
+- Replaced deprecated docker inspect flags
+- Fixed keychain initialization on Linux Gemini warning
 
-- CI readiness polling timeout increased to 90 seconds.
-- Gemini CLI smoke coverage no longer depends on a brittle help-string match.
-- `claude-delegator` rules now sync on every boot instead of only on first run.
-- `CLAUDE_DELEGATOR_COMMIT` now has a safe build-time default for CI environments without `.env`.
-
-## [0.1.0]
+## [0.3.0] - 2026-03-29
 
 ### Added
+- Added MIT License
 
-- Initial release of The AI Crowd as a single-container, persistent AI workstation for Claude, Gemini, and Codex in a homelab environment.
+### Changed
+- Required Claude delegation for health status
+- Updated README.md and visual assets
+- Updated Claude bootstrap
+- Synced recovery tests with MCP health checks
+
+## [0.2.1] - 2026-03-29
+
+### Added
+- Added pull-first deployment to Docker Compose
+- Extracted Dockerfile arguments to publish pipeline
+
+### Changed
+- Updated setup to pull-first workflow
+
+### Fixed
+- Pinned Node.js to 20.20.0
+- Fixed CI fixture copy
+- Updated Docker CLI guides
+- Added delegator rule pruning
+
+## [0.2.0] - 2026-03-25
+
+### Added
+- Added Gemini and Codex delegation
+- Added docker-ce-cli
+- Added CODEX_MCP_MODEL variable
+- Pinned GitHub SSH keys and claude-delegator SHA256
+- Added ShellCheck workflow
+- Added smoke-upgrade.sh tests
+
+### Changed
+- Updated Git authentication to SSH
+- Updated MCP initialization path
+- Split CI workflows
+
+### Fixed
+- Updated CI readiness timeout to 90s
+- Removed string-matching from Gemini tests
+- Forced delegation rule sync
+
+## [0.1.0] - 2026-03-21
+
+### Added
+- Initial release
+
+[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/the-ai-crowd/the-ai-crowd/releases/tag/v0.1.0
