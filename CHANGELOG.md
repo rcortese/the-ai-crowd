@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Bump Node.js to `20.20.2` (latest stable).
+- Bump Codex CLI to `0.118.0` (latest stable).
+- Bump all GitHub Actions to their latest major versions (`actions/checkout@v6`, `docker/*@vX`, etc.).
+
 ## [0.2.0] - 2026-03-24
 
 ### Added
