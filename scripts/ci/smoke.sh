@@ -122,10 +122,14 @@ docker compose "${compose_files[@]}" exec -T \
   [[ -d /workspace/projects ]]
   [[ -d /workspace/references ]]
   [[ -d /workspace/scratch ]]
+  [[ "${NPM_CONFIG_PREFIX}" == "${HOME}/.local/share/the-ai-crowd/npm-global" ]]
+  [[ -d "${NPM_CONFIG_PREFIX}" ]]
+  [[ -w "${NPM_CONFIG_PREFIX}" ]]
 
   command -v claude >/dev/null
   command -v gemini >/dev/null
   command -v codex >/dev/null
+  [[ "$(npm config get prefix)" == "${NPM_CONFIG_PREFIX}" ]]
 
   [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]]
   [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]
@@ -143,7 +147,7 @@ docker compose "${compose_files[@]}" exec -T \
   check_claude_mcp_registered codex
   check_claude_mcp_registered gemini
 
-  status_file="${HOME}/.local/share/ai-crowd/claude-mcp-bootstrap.status"
+  status_file="${HOME}/.local/share/the-ai-crowd/claude-mcp-bootstrap.status"
   [[ ! -s "${status_file}" ]]
 '
 

@@ -7,8 +7,9 @@ runtime_gid="$(id -g)"
 ssh_dir="${home_dir}/.ssh"
 claude_config_path="${home_dir}/.claude.json"
 claude_config_backup_path="${home_dir}/.claude.json.backup"
-ai_crowd_state_dir="${home_dir}/.local/share/ai-crowd"
-claude_mcp_status_path="${ai_crowd_state_dir}/claude-mcp-bootstrap.status"
+the_ai_crowd_state_dir="${home_dir}/.local/share/the-ai-crowd"
+claude_mcp_status_path="${the_ai_crowd_state_dir}/claude-mcp-bootstrap.status"
+the_ai_crowd_npm_global_prefix="${THE_AI_CROWD_NPM_GLOBAL_PREFIX:-${home_dir}/.local/share/the-ai-crowd/npm-global}"
 
 ensure_directory() {
   local dir_path="$1"
@@ -17,18 +18,19 @@ ensure_directory() {
     return 0
   fi
 
-  cat >&2 <<EOF
+  cat >&2 <<EOF2
 The AI Crowd container could not write to '${dir_path}'.
 The container is running as UID:GID ${runtime_uid}:${runtime_gid}, but the bind-mounted host path does not allow writes.
 Fix the owner/permissions of the mounted directory or align WORKBENCH_UID and WORKBENCH_GID in .env with the host path owner, then restart the container.
-EOF
+EOF2
   exit 70
 }
 
 ensure_directory "${home_dir}/.config"
 ensure_directory "${home_dir}/.cache"
 ensure_directory "${home_dir}/.local/share"
-ensure_directory "${ai_crowd_state_dir}"
+ensure_directory "${the_ai_crowd_state_dir}"
+ensure_directory "${the_ai_crowd_npm_global_prefix}"
 ensure_directory "${ssh_dir}"
 ensure_directory /workspace/projects
 ensure_directory /workspace/references
@@ -125,7 +127,6 @@ register_claude_mcp() {
   shift 2
   local -a command_args=("$@")
 
-  # Always overwrite — ensures stale entries in persisted state/home are corrected on every boot.
   if ! bootstrap_claude_config; then
     warn_claude_mcp_bootstrap "The AI Crowd could not bootstrap Claude config for MCP '${mcp_name}'. Shell access and direct CLI usage remain available, but the container will stay unhealthy until delegated MCP registration is repaired."
     return 1
@@ -143,10 +144,10 @@ register_claude_mcp() {
 
 if [[ -d "${ssh_dir}" ]]; then
   if ! chmod 700 "${ssh_dir}" 2>/dev/null; then
-    cat >&2 <<EOF
+    cat >&2 <<EOF2
 The AI Crowd container could not update permissions for '${ssh_dir}'.
 The mounted SSH directory must be writable by UID:GID ${runtime_uid}:${runtime_gid}.
-EOF
+EOF2
     exit 70
   fi
   find "${ssh_dir}" -type f \( -name "*.pub" -o -name "known_hosts" -o -name "config" \) -exec chmod 644 {} +
@@ -169,9 +170,6 @@ if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" != "true" ]]; then
   export DOCKER_HOST=""
 fi
 
-# claude-delegator: sync orchestration rules on every boot (image is source of truth)
-# Prune first so rules removed or renamed upstream do not persist in state/home.
-# ~/.claude/rules/delegator/ is exclusively managed here — do not place custom files there.
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]]; then
   delegator_rules_dst="${home_dir}/.claude/rules/delegator"
   mkdir -p "${delegator_rules_dst}"
@@ -184,7 +182,6 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]];
   shopt -u nullglob
 fi
 
-# claude-delegator: register MCP servers (idempotent, non-fatal at boot, required for health)
 reset_claude_mcp_status
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if ! command -v claude >/dev/null 2>&1; then
@@ -196,11 +193,11 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   fi
 fi
 
-cat <<'EOF'
+cat <<'EOF2'
 The AI Crowd container is ready.
 Projects:   /workspace/projects
 References: /workspace/references
 Scratch:    /workspace/scratch
-EOF
+EOF2
 
 exec "$@"

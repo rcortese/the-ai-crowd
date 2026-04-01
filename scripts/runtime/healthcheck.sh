@@ -37,8 +37,8 @@ check_claude_mcp_registered() {
 }
 
 home_dir="${HOME:-/home/operator}"
-ai_crowd_state_dir="${home_dir}/.local/share/ai-crowd"
-claude_mcp_status_path="${ai_crowd_state_dir}/claude-mcp-bootstrap.status"
+the_ai_crowd_state_dir="${home_dir}/.local/share/the-ai-crowd"
+claude_mcp_status_path="${the_ai_crowd_state_dir}/claude-mcp-bootstrap.status"
 
 require_dir "${home_dir}"
 require_dir "${home_dir}/.config"

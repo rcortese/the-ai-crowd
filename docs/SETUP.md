@@ -59,6 +59,7 @@ docker exec -it the-ai-crowd bash -l
 ```
 
 The container starts in `/workspace/projects` as the configured non-root user.
+Bundled npm CLIs are exposed through a user-writable prefix at `~/.local/share/the-ai-crowd/npm-global`, so future `npm install -g ...` updates do not require `root`.
 
 ## Path B: Build From Source
 

@@ -107,7 +107,7 @@ run_healthcheck() {
     [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] || { printf "CLAUDE_PLUGIN_ROOT not set\n" >&2; exit 1; }
     [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]] || { printf "Missing CLAUDE_PLUGIN_ROOT/rules\n" >&2; exit 1; }
     [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]] || { printf "orchestration.md not synced\n" >&2; exit 1; }
-    status_file="${HOME}/.local/share/ai-crowd/claude-mcp-bootstrap.status"
+    status_file="${HOME}/.local/share/the-ai-crowd/claude-mcp-bootstrap.status"
     if [[ -s "${status_file}" ]]; then
       printf "claude-delegator bootstrap degraded: %s\n" "$(cat "${status_file}")" >&2
       exit 1

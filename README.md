@@ -88,6 +88,7 @@ Your persistent terminal workspace is now ready to use.
 - Persistent state through host bind mounts.
 - Local-first delegation via `claude-delegator`.
 - Optional Docker-aware overlay for host Docker daemon access.
+- User-scoped npm global prefix under `~/.local/share/the-ai-crowd/npm-global`, so `npm install -g` can update bundled CLIs without `root`.
 
 ## Persistence at a Glance
 

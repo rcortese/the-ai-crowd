@@ -21,7 +21,11 @@ ENV LANG=C.UTF-8 \
     TZ=UTC \
     SHELL=/bin/bash \
     HOME=/home/${USERNAME} \
-    GEMINI_FORCE_FILE_STORAGE=true
+    GEMINI_FORCE_FILE_STORAGE=true \
+    THE_AI_CROWD_NPM_GLOBAL_SEED=/opt/the-ai-crowd/npm-global-seed \
+    THE_AI_CROWD_NPM_GLOBAL_PREFIX=/home/${USERNAME}/.local/share/the-ai-crowd/npm-global \
+    NPM_CONFIG_PREFIX=/home/${USERNAME}/.local/share/the-ai-crowd/npm-global \
+    PATH=/home/${USERNAME}/.local/share/the-ai-crowd/npm-global/bin:/opt/the-ai-crowd/npm-global-seed/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -94,15 +98,16 @@ RUN apt-get -o Acquire::Retries=3 update && \
     else \
       useradd --uid "${USER_UID}" --gid "${USER_GID}" --create-home --shell /bin/bash "${USERNAME}"; \
     fi && \
-    mkdir -p /workspace/projects /workspace/references /workspace/scratch /var/tmp/ai-crowd && \
+    mkdir -p /workspace/projects /workspace/references /workspace/scratch /var/tmp/the-ai-crowd && \
     mkdir -p /home/${USERNAME} && \
-    chown -R "${USER_UID}:${USER_GID}" /home/${USERNAME} /workspace /var/tmp/ai-crowd && \
+    chown -R "${USER_UID}:${USER_GID}" /home/${USERNAME} /workspace /var/tmp/the-ai-crowd && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}"
-RUN npm install -g "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}"
-RUN npm install -g "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
+RUN mkdir -p "${THE_AI_CROWD_NPM_GLOBAL_SEED}" && \
+    npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}" && \
+    npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}" && \
+    npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
 
 RUN mkdir -p /opt/claude-delegator \
     && tmp_archive="$(mktemp)" \

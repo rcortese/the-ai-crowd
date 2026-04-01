@@ -55,7 +55,7 @@ On each boot the entrypoint:
 4. Syncs `claude-delegator` rule files into the persisted Claude rules directory
 5. Attempts Claude MCP registration for Codex and Gemini and records any bootstrap degradation
 
-Bootstrap status is recorded in `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`.
+Bootstrap status is recorded in `data/home/.local/share/the-ai-crowd/claude-mcp-bootstrap.status`.
 
 ## Delegation
 
@@ -101,7 +101,31 @@ docker compose up -d
 docker compose -f compose.yaml -f compose.build.yaml up -d --build
 ```
 
-The running container is not meant to self-update. Upgrade through a fresh image pull or rebuild.
+### Manual CLI updates inside the container
+
+The bundled npm CLIs now use a user-scoped global prefix:
+
+```bash
+npm config get prefix
+```
+
+Expected output:
+
+```text
+/home/operator/.local/share/the-ai-crowd/npm-global
+```
+
+That path lives under the persisted home mount, so non-root updates survive container restarts and recreations:
+
+```bash
+npm install -g @anthropic-ai/claude-code@latest
+npm install -g @google/gemini-cli@latest
+npm install -g @openai/codex@latest
+```
+
+The image still carries pinned seed versions as a fallback, but once a CLI is updated in the user prefix, that version takes precedence on `PATH`.
+
+Use an image pull or rebuild when you want updated base OS packages or a new default tool baseline. Use manual `npm install -g` when you only need a newer CLI release.
 
 ## Troubleshooting
 
@@ -113,7 +137,7 @@ The running container is not meant to self-update. Upgrade through a fresh image
 
 Check:
 
-- `data/home/.local/share/ai-crowd/claude-mcp-bootstrap.status`
+- `data/home/.local/share/the-ai-crowd/claude-mcp-bootstrap.status`
 - `~/.claude.json` inside the container
 - whether `claude`, `codex`, `gemini`, and `node` are available on `PATH`
 - whether `docker ps` shows the container as `healthy`, not just `Up`
