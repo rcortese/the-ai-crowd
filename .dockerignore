@@ -2,4 +2,5 @@
 .github
 .env
 .env.*
+data
 state
