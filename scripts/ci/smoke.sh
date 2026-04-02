@@ -53,6 +53,7 @@ expected_gemini_version="$(dockerfile_arg_default GEMINI_CLI_VERSION)"
 expected_claude_version="$(dockerfile_arg_default CLAUDE_CODE_VERSION)"
 expected_codex_version="$(dockerfile_arg_default CODEX_CLI_VERSION)"
 path_shadow_fixture_dir="${temp_repo}/data/projects/path-shadow-codex"
+path_shadow_container_dir="/workspace/projects/path-shadow-codex"
 path_shadow_marker="path-shadow-codex-user-install"
 
 [[ -z "${expected_claude_version}" || "${expected_claude_version}" == "null" ]] \
@@ -102,7 +103,7 @@ run_exec_cli_check() {
 docker compose "${compose_files[@]}" exec -T \
   -e EXPECTED_UID="${expected_uid}" \
   -e EXPECTED_GID="${expected_gid}" \
-  -e PATH_SHADOW_FIXTURE_DIR="${path_shadow_fixture_dir}" \
+  -e PATH_SHADOW_FIXTURE_DIR="${path_shadow_container_dir}" \
   -e PATH_SHADOW_MARKER="${path_shadow_marker}" \
   "${service}" bash -lc '
   set -euo pipefail
