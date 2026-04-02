@@ -144,7 +144,7 @@ Check:
 
 ### Docker commands fail inside the workbench
 
-The base image includes the `docker` CLI, but Docker daemon access only exists when you start with `compose.docker.yaml` and pass the correct `DOCKER_GID`.
+The base image includes the `docker` CLI and `docker compose` plugin, but Docker daemon access only exists when you start with `compose.docker.yaml` and pass the correct `DOCKER_GID` for the host socket.
 
 ### Git identity looks wrong
 

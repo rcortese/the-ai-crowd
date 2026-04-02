@@ -90,19 +90,19 @@ docker exec -it the-ai-crowd bash -l
 
 ## Optional Docker-Aware Mode
 
-Use this only when the workbench must talk to the host Docker daemon.
+Use this only when the workbench must talk to the host Docker daemon. Before starting, set `DOCKER_GID="$(stat -c %g /var/run/docker.sock)"` in `.env` or your shell.
 
 ```bash
-docker compose -f compose.yaml -f compose.docker.yaml up -d
+DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d
 ```
 
 This overlay:
 
-- sets `AI_CROWD_ENABLE_DOCKER=true`
+- sets `DOCKER_ENABLE=true`
 - mounts `/var/run/docker.sock`
 - adds the host Docker group via `DOCKER_GID`
 
-The image already includes the `docker` CLI. The overlay grants daemon access; it does not install Docker tooling.
+The image includes the `docker` CLI and `docker compose` plugin. The overlay grants daemon access; it does not install the Docker daemon.
 
 ## Required Environment Variables
 
@@ -112,7 +112,7 @@ The image already includes the `docker` CLI. The overlay grants daemon access; i
 | `WORKBENCH_UID` | yes | yes | Must match the owner of `./data` |
 | `WORKBENCH_GID` | yes | yes | Must match the owner of `./data` |
 | `WORKBENCH_USER` | keep default | optional override | Only change for local builds |
-| `DOCKER_GID` | no | no | Used only with `compose.docker.yaml` |
+| `DOCKER_GID` | no | no | Required with `compose.docker.yaml`; set it to `stat -c %g /var/run/docker.sock` on the host |
 
 Optional API keys:
 

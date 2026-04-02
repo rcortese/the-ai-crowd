@@ -57,8 +57,11 @@ check_git_config init.defaultBranch main
 check_git_config pull.rebase false
 check_git_config core.editor vim
 
-if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" == "true" ]]; then
+if [[ "${DOCKER_ENABLE:-false}" == "true" ]]; then
   [[ -S /var/run/docker.sock ]] || fail "docker mode enabled but /var/run/docker.sock is not available"
+  docker compose version >/dev/null 2>&1 || fail "docker mode enabled but docker compose is unavailable"
+  socket_gid="$(stat -c '%g' /var/run/docker.sock)"
+  id -G | tr ' ' '\n' | grep -qx "${socket_gid}" || fail "docker mode enabled but process is missing socket group ${socket_gid}"
   docker info >/dev/null 2>&1 || fail "docker mode enabled but docker daemon is not accessible"
 else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"

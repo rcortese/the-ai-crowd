@@ -80,14 +80,14 @@ Your persistent terminal workspace is now ready to use.
 | --- | --- | --- |
 | **Pull-first** | Standard path for most users | `docker compose up -d` |
 | **Build from source** | Maintain the image or change pinned versions | `docker compose -f compose.yaml -f compose.build.yaml up -d --build` |
-| **Docker-aware** | Allow the container to communicate with the host Docker daemon | `docker compose -f compose.yaml -f compose.docker.yaml up -d` |
+| **Docker-aware** | Allow the container to communicate with the host Docker daemon | `DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d` |
 
 ## What's Included
 
 - A single container with Claude Code, Gemini CLI, Codex CLI, Git, SSH, and daily shell tools pre-installed.
 - Persistent state through host bind mounts.
 - Local-first delegation via `claude-delegator`.
-- Optional Docker-aware overlay for host Docker daemon access.
+- Optional Docker-aware overlay for host Docker daemon access with explicit `DOCKER_GID` mapping.
 - User-scoped npm global prefix under `~/.local/share/the-ai-crowd/npm-global`, so `npm install -g` can update bundled CLIs without `root`.
 
 ## Persistence at a Glance
@@ -114,7 +114,7 @@ The base runtime secures the container by:
 - Using `tmpfs` for `/tmp` and `/run`.
 - Defining explicit writable paths through bind mounts.
 
-The Docker-aware mode intentionally expands this trust boundary by mounting `/var/run/docker.sock` and adding the Docker group. Use this mode only when necessary.
+The Docker-aware mode intentionally expands this trust boundary by mounting `/var/run/docker.sock` and adding the host socket group selected through `DOCKER_GID`. Use this mode only when necessary.
 
 ## Documentation Map
 

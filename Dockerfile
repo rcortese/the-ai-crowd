@@ -83,7 +83,8 @@ RUN apt-get -o Acquire::Retries=3 update && \
       make \
       pkg-config \
       openssh-client \
-      docker-ce-cli${DOCKER_CE_CLI_VERSION:+=${DOCKER_CE_CLI_VERSION}} && \
+      docker-ce-cli${DOCKER_CE_CLI_VERSION:+=${DOCKER_CE_CLI_VERSION}} \
+      docker-compose-plugin && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd && \
     ln -sf /usr/bin/batcat /usr/local/bin/bat && \
     if ! getent group "${USER_GID}" >/dev/null; then \

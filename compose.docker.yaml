@@ -1,8 +1,8 @@
 services:
   the-ai-crowd:
     environment:
-      AI_CROWD_ENABLE_DOCKER: "true"
+      DOCKER_ENABLE: "true"
     group_add:
-      - "${DOCKER_GID:-998}"
+      - "${DOCKER_GID:?Set DOCKER_GID to the GID of /var/run/docker.sock on the host}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

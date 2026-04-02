@@ -65,9 +65,9 @@ That startup contract explains why the image is the source of truth for tooling 
 Docker support is optional and additive.
 
 - Standard mode exposes files, repos, shell tools, and local delegation only
-- Docker-aware mode mounts `/var/run/docker.sock` and adds the host Docker group
+- Docker-aware mode mounts `/var/run/docker.sock`, expects `DOCKER_GID` to match the host socket GID, and relies on the bundled `docker compose` plugin
 
-The `docker` CLI can exist in the image without making host daemon access mandatory. The overlay is the capability switch.
+The `docker` CLI and `docker compose` plugin can exist in the image without making host daemon access mandatory. The overlay is the capability switch, and `DOCKER_GID` is the host-specific permission handoff.
 
 ## Trust And Security Boundary
 

@@ -166,8 +166,43 @@ if ! git config --global --get core.editor >/dev/null; then
   git config --global core.editor vim
 fi
 
-if [[ "${AI_CROWD_ENABLE_DOCKER:-false}" != "true" ]]; then
+if [[ "${DOCKER_ENABLE:-false}" != "true" ]]; then
   export DOCKER_HOST=""
+else
+  if ! command -v docker >/dev/null 2>&1; then
+    cat >&2 <<'EOF2'
+The AI Crowd Docker-aware mode is enabled, but the docker CLI is missing.
+Rebuild the image with Docker tooling support or start without compose.docker.yaml.
+EOF2
+    exit 70
+  fi
+
+  if ! docker compose version >/dev/null 2>&1; then
+    cat >&2 <<'EOF2'
+The AI Crowd Docker-aware mode is enabled, but docker compose is unavailable inside the container.
+Install the docker-compose-plugin in the image or start without compose.docker.yaml.
+EOF2
+    exit 70
+  fi
+
+  if [[ ! -S /var/run/docker.sock ]]; then
+    cat >&2 <<'EOF2'
+The AI Crowd Docker-aware mode is enabled, but /var/run/docker.sock is not mounted.
+Start the container with compose.docker.yaml or disable DOCKER_ENABLE.
+EOF2
+    exit 70
+  fi
+
+  socket_gid="$(stat -c '%g' /var/run/docker.sock)"
+  if ! id -G | tr ' ' '\n' | grep -qx "${socket_gid}"; then
+    cat >&2 <<EOF2
+The AI Crowd Docker-aware mode is enabled, but the current process cannot access /var/run/docker.sock.
+Expected supplemental group GID: ${socket_gid}
+Current groups: $(id -G)
+Set DOCKER_GID=${socket_gid} when starting with compose.docker.yaml, then recreate the container.
+EOF2
+    exit 70
+  fi
 fi
 
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]]; then
