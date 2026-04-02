@@ -60,3 +60,29 @@ services:
     container_name: ${container_name}
 EOF
 }
+
+write_local_npm_cli_fixture() {
+  local package_dir="$1"
+  local package_name="$2"
+  local bin_name="$3"
+  local marker="$4"
+
+  mkdir -p "${package_dir}/bin"
+  cat > "${package_dir}/package.json" <<EOF
+{
+  "name": "${package_name}",
+  "version": "1.0.0",
+  "bin": {
+    "${bin_name}": "bin/${bin_name}"
+  }
+}
+EOF
+
+  cat > "${package_dir}/bin/${bin_name}" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' '${marker}'
+EOF
+
+  chmod 0755 "${package_dir}/bin/${bin_name}"
+}

@@ -52,11 +52,19 @@ expected_gid="${config_user##*:}"
 expected_gemini_version="$(dockerfile_arg_default GEMINI_CLI_VERSION)"
 expected_claude_version="$(dockerfile_arg_default CLAUDE_CODE_VERSION)"
 expected_codex_version="$(dockerfile_arg_default CODEX_CLI_VERSION)"
+path_shadow_fixture_dir="${temp_repo}/data/projects/path-shadow-codex"
+path_shadow_marker="path-shadow-codex-user-install"
 
 [[ -z "${expected_claude_version}" || "${expected_claude_version}" == "null" ]] \
   && { printf 'ERROR: CLAUDE_CODE_VERSION missing from Dockerfile ARG defaults\n' >&2; exit 1; }
 [[ -z "${expected_codex_version}"  || "${expected_codex_version}"  == "null" ]] \
   && { printf 'ERROR: CODEX_CLI_VERSION missing from Dockerfile ARG defaults\n' >&2; exit 1; }
+
+write_local_npm_cli_fixture \
+  "${path_shadow_fixture_dir}" \
+  "the-ai-crowd-codex-shadow" \
+  "codex" \
+  "${path_shadow_marker}"
 
 docker compose "${compose_files[@]}" up -d --no-build "${service}"
 
@@ -130,6 +138,11 @@ docker compose "${compose_files[@]}" exec -T \
   command -v gemini >/dev/null
   command -v codex >/dev/null
   [[ "$(npm config get prefix)" == "${NPM_CONFIG_PREFIX}" ]]
+  [[ "$(command -v codex)" == "/opt/the-ai-crowd/npm-global-seed/bin/codex" ]]
+
+  npm install -g /workspace/projects/path-shadow-codex >/dev/null 2>&1
+  [[ "$(command -v codex)" == "${NPM_CONFIG_PREFIX}/bin/codex" ]]
+  [[ "$(codex)" == "path-shadow-codex-user-install" ]]
 
   [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]]
   [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]
