@@ -180,7 +180,7 @@ run_exec_cli_check \
   "claude --version" \
   "^${escaped_claude_version}$"
 run_exec_cli_check \
-  "codex --version" \
+  "/opt/the-ai-crowd/npm-global-seed/bin/codex --version" \
   "^${escaped_codex_version}$"
 
 cd "${repo_root}"
