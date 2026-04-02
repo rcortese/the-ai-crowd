@@ -83,6 +83,7 @@ The container healthcheck verifies:
 - bundled CLIs are on `PATH`
 - Git defaults are present
 - Docker mode matches the runtime socket state
+- Docker-aware mode can create namespaces for `unshare` and `codex sandbox linux`
 - delegated MCP rules, bridge files, and registrations are present
 - the bootstrap status file is empty
 
@@ -144,7 +145,11 @@ Check:
 
 ### Docker commands fail inside the workbench
 
-The base image includes the `docker` CLI and `docker compose` plugin, but Docker daemon access only exists when you start with `compose.docker.yaml` and pass the correct `DOCKER_GID` for the host socket.
+The base image includes the `docker` CLI and `docker compose` plugin, but Docker daemon access and Codex Linux sandbox compatibility only exist when you start with `compose.docker.yaml` and pass the correct `DOCKER_GID` for the host socket.
+
+### Codex sandbox fails with namespace errors
+
+If Codex reports `bwrap` or namespace creation failures, confirm that you started the workbench with `compose.docker.yaml`. In this project, the Docker-aware overlay is also the capability switch that relaxes seccomp enough for `unshare` and `codex sandbox linux` to work.
 
 ### Git identity looks wrong
 

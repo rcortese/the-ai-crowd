@@ -130,6 +130,8 @@ run_healthcheck() {
       docker info >/dev/null 2>&1 || { printf "docker info unavailable in docker-aware mode\n" >&2; exit 1; }
       socket_gid="$(stat -c %g /var/run/docker.sock)"
       id -G | tr " " "\n" | grep -qx "${socket_gid}" || { printf "missing docker socket group %s\n" "${socket_gid}" >&2; exit 1; }
+      unshare --user --mount true >/dev/null 2>&1 || { printf "unshare unavailable in docker-aware mode\n" >&2; exit 1; }
+      timeout 10 codex sandbox linux -- true >/dev/null 2>&1 || { printf "Codex Linux sandbox unavailable in docker-aware mode\n" >&2; exit 1; }
     fi
     status_file="${HOME}/.local/share/the-ai-crowd/claude-mcp-bootstrap.status"
     if [[ -s "${status_file}" ]]; then

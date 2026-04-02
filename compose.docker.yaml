@@ -2,6 +2,8 @@ services:
   the-ai-crowd:
     environment:
       DOCKER_ENABLE: "true"
+    security_opt:
+      - seccomp:unconfined
     group_add:
       - "${DOCKER_GID:?Set DOCKER_GID to the GID of /var/run/docker.sock on the host}"
     volumes:

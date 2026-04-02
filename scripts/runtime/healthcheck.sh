@@ -63,6 +63,8 @@ if [[ "${DOCKER_ENABLE:-false}" == "true" ]]; then
   socket_gid="$(stat -c '%g' /var/run/docker.sock)"
   id -G | tr ' ' '\n' | grep -qx "${socket_gid}" || fail "docker mode enabled but process is missing socket group ${socket_gid}"
   docker info >/dev/null 2>&1 || fail "docker mode enabled but docker daemon is not accessible"
+  unshare --user --mount true >/dev/null 2>&1 || fail "docker mode enabled but unshare for user and mount namespaces is unavailable"
+  timeout 10 codex sandbox linux -- true >/dev/null 2>&1 || fail "docker mode enabled but Codex Linux sandbox is unavailable"
 else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"
 fi

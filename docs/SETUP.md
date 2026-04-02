@@ -90,7 +90,7 @@ docker exec -it the-ai-crowd bash -l
 
 ## Optional Docker-Aware Mode
 
-Use this only when the workbench must talk to the host Docker daemon. Before starting, set `DOCKER_GID="$(stat -c %g /var/run/docker.sock)"` in `.env` or your shell.
+Use this only when the workbench must talk to the host Docker daemon or when you need the Codex Linux sandbox to run inside the workbench. Before starting, set `DOCKER_GID="$(stat -c %g /var/run/docker.sock)"` in `.env` or your shell.
 
 ```bash
 DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d
@@ -99,10 +99,11 @@ DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -
 This overlay:
 
 - sets `DOCKER_ENABLE=true`
+- relaxes seccomp enough for `unshare` and `codex sandbox linux`
 - mounts `/var/run/docker.sock`
 - adds the host Docker group via `DOCKER_GID`
 
-The image includes the `docker` CLI and `docker compose` plugin. The overlay grants daemon access; it does not install the Docker daemon.
+The image includes the `docker` CLI and `docker compose` plugin. The overlay grants daemon access and enables the Codex Linux sandbox; it does not install the Docker daemon.
 
 ## Required Environment Variables
 

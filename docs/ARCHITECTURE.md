@@ -65,9 +65,9 @@ That startup contract explains why the image is the source of truth for tooling 
 Docker support is optional and additive.
 
 - Standard mode exposes files, repos, shell tools, and local delegation only
-- Docker-aware mode mounts `/var/run/docker.sock`, expects `DOCKER_GID` to match the host socket GID, and relies on the bundled `docker compose` plugin
+- Docker-aware mode mounts `/var/run/docker.sock`, expects `DOCKER_GID` to match the host socket GID, relies on the bundled `docker compose` plugin, and relaxes seccomp enough for the Codex Linux sandbox to create namespaces
 
-The `docker` CLI and `docker compose` plugin can exist in the image without making host daemon access mandatory. The overlay is the capability switch, and `DOCKER_GID` is the host-specific permission handoff.
+The `docker` CLI and `docker compose` plugin can exist in the image without making host daemon access mandatory. The overlay is the capability switch for both host Docker access and Codex Linux sandbox compatibility, and `DOCKER_GID` is the host-specific permission handoff.
 
 ## Trust And Security Boundary
 
@@ -79,7 +79,7 @@ The AI Crowd is not a zero-trust sandbox.
 - It uses `tmpfs` for `/tmp` and `/run`
 - It keeps writable paths explicit
 
-Those controls narrow the runtime, but they do not change the trust model: the container can still access the repositories and state you mount. Docker-aware mode expands trust further because the host Docker daemon becomes reachable.
+Those controls narrow the runtime, but they do not change the trust model: the container can still access the repositories and state you mount. Docker-aware mode expands trust further because the host Docker daemon becomes reachable and seccomp is relaxed for namespace creation.
 
 ## Scope
 
