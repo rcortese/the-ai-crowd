@@ -127,6 +127,7 @@ run_healthcheck() {
     [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]] || { printf "orchestration.md not synced\n" >&2; exit 1; }
     if [[ "${DOCKER_ENABLE:-false}" == "true" ]]; then
       docker compose version >/dev/null 2>&1 || { printf "docker compose unavailable in docker-aware mode\n" >&2; exit 1; }
+      docker info >/dev/null 2>&1 || { printf "docker info unavailable in docker-aware mode\n" >&2; exit 1; }
       socket_gid="$(stat -c %g /var/run/docker.sock)"
       id -G | tr " " "\n" | grep -qx "${socket_gid}" || { printf "missing docker socket group %s\n" "${socket_gid}" >&2; exit 1; }
     fi
