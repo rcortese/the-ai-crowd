@@ -95,7 +95,11 @@ services:
   the-ai-crowd:
     container_name: ${container_name}
     volumes:
-      - ci-home:/home/\${WORKBENCH_USER:-operator}
+      - type: volume
+        source: ci-home
+        target: /home/\${WORKBENCH_USER:-operator}
+        volume:
+          nocopy: true
       - ci-projects:/workspace/projects
       - ci-references:/workspace/references:ro
       - ci-scratch:/workspace/scratch

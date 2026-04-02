@@ -104,6 +104,13 @@ run_exec_cli_check() {
   fi
 }
 
+escaped_claude_version="${expected_claude_version//./\\.}"
+escaped_codex_version="${expected_codex_version//./\\.}"
+
+run_exec_cli_check \
+  "codex --version" \
+  "^${escaped_codex_version}$"
+
 docker compose "${compose_files[@]}" exec -T \
   -e EXPECTED_UID="${expected_uid}" \
   -e EXPECTED_GID="${expected_gid}" \
@@ -145,7 +152,9 @@ docker compose "${compose_files[@]}" exec -T \
   command -v gemini >/dev/null
   command -v codex >/dev/null
   [[ "$(npm config get prefix)" == "${NPM_CONFIG_PREFIX}" ]]
-  [[ "$(command -v codex)" == "/opt/the-ai-crowd/npm-global-seed/bin/codex" ]]
+  resolved_codex_path="$(readlink -f "$(command -v codex)")"
+  expected_seed_codex_path="$(readlink -f /opt/the-ai-crowd/npm-global-seed/bin/codex)"
+  [[ "${resolved_codex_path}" == "${expected_seed_codex_path}" ]]
 
 
   [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]]
@@ -177,9 +186,7 @@ run_exec_cli_check \
   "gemini --version" \
   "^${expected_gemini_version}$"
 
-# Exact version checks for claude and codex (dots escaped — they are regex metacharacters)
-escaped_claude_version="${expected_claude_version//./\\.}"
-escaped_codex_version="${expected_codex_version//./\\.}"
+# Exact version checks for claude and the bundled codex seed binary
 run_exec_cli_check \
   "claude --version" \
   "^${escaped_claude_version}$"
