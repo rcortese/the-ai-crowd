@@ -44,13 +44,26 @@ fixture_volume_name() {
   printf '%s_%s\n' "${compose_project}" "${volume_suffix}"
 }
 
+container_healthcheck_command() {
+  cat <<'EOF'
+if [[ -x /usr/local/bin/the-ai-crowd-healthcheck ]]; then
+  exec /usr/local/bin/the-ai-crowd-healthcheck
+else
+  exec /usr/local/bin/ai-crowd-healthcheck
+fi
+EOF
+}
+
 # compose_files and service are caller-set globals
 # shellcheck disable=SC2154
 wait_for_service_ready() {
   local attempts=0
+  local healthcheck_cmd
+
+  healthcheck_cmd="$(container_healthcheck_command)"
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/the-ai-crowd-healthcheck >/dev/null 2>&1; then
+    if docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}" >/dev/null 2>&1; then
       return 0
     fi
 
@@ -90,15 +103,32 @@ services:
 volumes:
   ci-home:
     name: ${home_volume}
+    external: true
   ci-projects:
     name: ${projects_volume}
+    external: true
   ci-references:
     name: ${references_volume}
+    external: true
   ci-scratch:
     name: ${scratch_volume}
+    external: true
   ci-ssh:
     name: ${ssh_volume}
+    external: true
 EOF
+}
+
+remove_test_volumes() {
+  local compose_project="$1"
+
+  docker volume rm -f \
+    "$(fixture_volume_name "${compose_project}" ci-home)" \
+    "$(fixture_volume_name "${compose_project}" ci-projects)" \
+    "$(fixture_volume_name "${compose_project}" ci-references)" \
+    "$(fixture_volume_name "${compose_project}" ci-scratch)" \
+    "$(fixture_volume_name "${compose_project}" ci-ssh)" \
+    >/dev/null 2>&1 || true
 }
 
 seed_volume_from_fixture() {
@@ -129,6 +159,7 @@ seed_test_volumes() {
   local compose_project="$1"
   local temp_repo="$2"
 
+  remove_test_volumes "${compose_project}"
   seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-home)" "${temp_repo}/data/home"
   seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-projects)" "${temp_repo}/data/projects"
   seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-references)" "${temp_repo}/data/references"

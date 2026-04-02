@@ -42,6 +42,7 @@ export COMPOSE_PROJECT_NAME="${compose_project}"
 cleanup() {
   docker compose "${compose_base[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   docker compose "${compose_docker[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  remove_test_volumes "${compose_project}"
   wait_for_cleanup
   chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
   rm -rf "${temp_root}"
@@ -77,9 +78,12 @@ wait_for_cleanup() {
 wait_for_service_ready() {
   local -a compose_files=("$@")
   local attempts=0
+  local healthcheck_cmd
+
+  healthcheck_cmd="$(container_healthcheck_command)"
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/the-ai-crowd-healthcheck >/dev/null 2>&1; then
+    if docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}" >/dev/null 2>&1; then
       return 0
     fi
 
@@ -120,7 +124,7 @@ run_healthcheck() {
   seed_test_volumes "${compose_project}" "${temp_repo}"
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
   wait_for_service_ready "${compose_files[@]}"
-  docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/the-ai-crowd-healthcheck
+  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "$(container_healthcheck_command)"
   # claude-delegator integration assertions
   docker compose "${compose_files[@]}" exec -T "${service}" bash -lc '
     set -euo pipefail

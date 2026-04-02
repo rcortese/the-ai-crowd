@@ -38,6 +38,7 @@ dockerfile_arg_default() {
 
 cleanup() {
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  remove_test_volumes "${compose_project}"
   chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
   rm -rf "${temp_root}"
 }
