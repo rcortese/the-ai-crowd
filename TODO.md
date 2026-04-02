@@ -3,7 +3,7 @@
 - [x] Teste `1`: smoke de precedencia do `PATH` para CLI atualizada pelo usuario.
 Contexto: validar que um `npm install -g` feito pelo usuario em `~/.local/share/the-ai-crowd/npm-global` vence o binario seed em `/opt/the-ai-crowd/npm-global-seed`.
 
-- [ ] Teste `2`: persistencia do update manual entre recriacoes.
+- [x] Teste `2`: persistencia do update manual entre recriacoes.
 Contexto: validar que a CLI atualizada manualmente continua ativa depois de derrubar e subir o container sem rebuild, por causa do bind mount da `home`.
 
 - [ ] Teste `3`: falha precoce do modo Docker-aware sem `DOCKER_GID`.

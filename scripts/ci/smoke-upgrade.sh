@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# smoke-upgrade.sh — persisted-state recovery scenario test
+# smoke-upgrade.sh — persisted-state recovery and recreation scenario test
 #
-# Verifies that entrypoint.sh recovers persisted Claude MCP state on restart.
+# Verifies that user-scoped updates and Claude MCP state survive restart and
+# container recreation without an image rebuild.
 #
 # Usage:
 #   docker compose -f compose.yaml -f compose.build.yaml build the-ai-crowd
@@ -25,9 +26,16 @@ temp_repo="${temp_root}/repo"
 compose_project="ai-crowd-upgrade-${RANDOM}${RANDOM}"
 container_name="${compose_project}-the-ai-crowd"
 override_file="${temp_repo}/docker-compose.ci.override.yml"
+path_shadow_fixture_dir="${temp_repo}/data/projects/path-shadow-codex-persist"
+path_shadow_marker="path-shadow-codex-persisted"
 
 prepare_temp_repo_fixture "${temp_repo}"
 write_compose_override "${override_file}" "${container_name}"
+write_local_npm_cli_fixture \
+  "${path_shadow_fixture_dir}" \
+  "the-ai-crowd-codex-persist" \
+  "codex" \
+  "${path_shadow_marker}"
 
 compose_files=(
   -f compose.yaml
@@ -50,6 +58,12 @@ restart_and_wait() {
   wait_for_service_ready
 }
 
+recreate_and_wait() {
+  docker compose "${compose_files[@]}" down --remove-orphans >/dev/null
+  docker compose "${compose_files[@]}" up -d --no-build "${service}"
+  wait_for_service_ready
+}
+
 assert_registered() {
   local mcp_name="$1"
 
@@ -64,6 +78,17 @@ assert_codex_command() {
     || { printf '[smoke-upgrade] FAIL: codex MCP command not restored\n' >&2; exit 1; }
 }
 
+assert_user_codex_override() {
+  docker exec "${container_name}" bash -lc '
+    set -euo pipefail
+    [[ "$(command -v codex)" == "${HOME}/.local/share/the-ai-crowd/npm-global/bin/codex" ]]
+    [[ "$(codex)" == "path-shadow-codex-persisted" ]]
+  ' || {
+    printf '[smoke-upgrade] FAIL: user-installed codex override did not persist\n' >&2
+    exit 1
+  }
+}
+
 cd "${temp_repo}"
 docker compose "${compose_files[@]}" up -d --no-build "${service}"
 wait_for_service_ready
@@ -73,6 +98,20 @@ printf '[smoke-upgrade] === Persisted-state recovery scenarios ===\n'
 # Guard: container must be running with a valid ~/.claude.json
 docker exec "${container_name}" bash -lc 'test -f ~/.claude.json' \
   || { printf '[smoke-upgrade] FAIL: ~/.claude.json not found after bootstrap\n' >&2; exit 1; }
+
+# Scenario 0: user-scoped CLI override must survive container recreation
+
+docker exec "${container_name}" bash -lc '
+  set -euo pipefail
+  [[ "$(command -v codex)" == "/opt/the-ai-crowd/npm-global-seed/bin/codex" ]]
+  npm install -g /workspace/projects/path-shadow-codex-persist >/dev/null 2>&1
+  [[ "$(command -v codex)" == "${HOME}/.local/share/the-ai-crowd/npm-global/bin/codex" ]]
+  [[ "$(codex)" == "path-shadow-codex-persisted" ]]
+'
+printf '[smoke-upgrade] Installed user-scoped codex override\n'
+recreate_and_wait
+assert_user_codex_override
+printf '[smoke-upgrade] PASS: user-scoped codex override survived recreation\n'
 
 # Scenario 1: stale MCP command must be overwritten
 docker exec "${container_name}" sh -c '
