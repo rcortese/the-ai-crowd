@@ -109,7 +109,8 @@ RUN if ! getent group "${USER_GID}" >/dev/null; then \
 RUN mkdir -p "${THE_AI_CROWD_NPM_GLOBAL_SEED}" && \
     npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}" && \
     npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${GEMINI_CLI_PACKAGE}@${GEMINI_CLI_VERSION}" && \
-    npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}"
+    npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${CODEX_CLI_PACKAGE}@${CODEX_CLI_VERSION}" && \
+    npm cache clean --force
 
 RUN mkdir -p /opt/claude-delegator \
     && tmp_archive="$(mktemp)" \
