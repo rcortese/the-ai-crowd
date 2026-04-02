@@ -37,13 +37,20 @@ prepare_temp_repo_fixture() {
     "${temp_repo}/data/ssh"
 }
 
+fixture_volume_name() {
+  local compose_project="$1"
+  local volume_suffix="$2"
+
+  printf '%s_%s\n' "${compose_project}" "${volume_suffix}"
+}
+
 # compose_files and service are caller-set globals
 # shellcheck disable=SC2154
 wait_for_service_ready() {
   local attempts=0
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck >/dev/null 2>&1; then
+    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/the-ai-crowd-healthcheck >/dev/null 2>&1; then
       return 0
     fi
 
@@ -61,12 +68,72 @@ wait_for_service_ready() {
 write_compose_override() {
   local override_file="$1"
   local container_name="$2"
+  local compose_project="$3"
+  local home_volume projects_volume references_volume scratch_volume ssh_volume
+
+  home_volume="$(fixture_volume_name "${compose_project}" ci-home)"
+  projects_volume="$(fixture_volume_name "${compose_project}" ci-projects)"
+  references_volume="$(fixture_volume_name "${compose_project}" ci-references)"
+  scratch_volume="$(fixture_volume_name "${compose_project}" ci-scratch)"
+  ssh_volume="$(fixture_volume_name "${compose_project}" ci-ssh)"
 
   cat > "${override_file}" <<EOF
 services:
   the-ai-crowd:
     container_name: ${container_name}
+    volumes:
+      - ci-home:/home/\${WORKBENCH_USER:-operator}
+      - ci-projects:/workspace/projects
+      - ci-references:/workspace/references:ro
+      - ci-scratch:/workspace/scratch
+      - ci-ssh:/home/\${WORKBENCH_USER:-operator}/.ssh
+volumes:
+  ci-home:
+    name: ${home_volume}
+  ci-projects:
+    name: ${projects_volume}
+  ci-references:
+    name: ${references_volume}
+  ci-scratch:
+    name: ${scratch_volume}
+  ci-ssh:
+    name: ${ssh_volume}
 EOF
+}
+
+seed_volume_from_fixture() {
+  local volume_name="$1"
+  local fixture_dir="$2"
+
+  [[ -d "${fixture_dir}" ]]
+  docker volume create "${volume_name}" >/dev/null
+
+  if find "${fixture_dir}" -mindepth 1 -print -quit | grep -q .; then
+    tar -C "${fixture_dir}" -cf - . | docker run --rm -i --user 0:0 --entrypoint bash \
+      -e EXPECTED_UID="${WORKBENCH_UID}" \
+      -e EXPECTED_GID="${WORKBENCH_GID}" \
+      -v "${volume_name}:/seed" \
+      the-ai-crowd:local \
+      -lc 'set -euo pipefail; mkdir -p /seed; tar -xf - -C /seed; chown -R "${EXPECTED_UID}:${EXPECTED_GID}" /seed'
+  else
+    docker run --rm --user 0:0 --entrypoint bash \
+      -e EXPECTED_UID="${WORKBENCH_UID}" \
+      -e EXPECTED_GID="${WORKBENCH_GID}" \
+      -v "${volume_name}:/seed" \
+      the-ai-crowd:local \
+      -lc 'set -euo pipefail; mkdir -p /seed; chown -R "${EXPECTED_UID}:${EXPECTED_GID}" /seed'
+  fi
+}
+
+seed_test_volumes() {
+  local compose_project="$1"
+  local temp_repo="$2"
+
+  seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-home)" "${temp_repo}/data/home"
+  seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-projects)" "${temp_repo}/data/projects"
+  seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-references)" "${temp_repo}/data/references"
+  seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-scratch)" "${temp_repo}/data/scratch"
+  seed_volume_from_fixture "$(fixture_volume_name "${compose_project}" ci-ssh)" "${temp_repo}/data/ssh"
 }
 
 write_local_npm_cli_fixture() {

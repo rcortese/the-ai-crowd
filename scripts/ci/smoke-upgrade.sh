@@ -18,24 +18,26 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_dir}/lib.sh"
 
 set_workbench_ids
+export DOCKER_ENABLE=false
 
 service="the-ai-crowd"
 repo_root="$(pwd)"
 temp_root="$(create_temp_repo_root "${repo_root}")"
 temp_repo="${temp_root}/repo"
-compose_project="ai-crowd-upgrade-${RANDOM}${RANDOM}"
+compose_project="the-ai-crowd-upgrade-${RANDOM}${RANDOM}"
 container_name="${compose_project}-the-ai-crowd"
 override_file="${temp_repo}/docker-compose.ci.override.yml"
 path_shadow_fixture_dir="${temp_repo}/data/projects/path-shadow-codex-persist"
 path_shadow_marker="path-shadow-codex-persisted"
 
 prepare_temp_repo_fixture "${temp_repo}"
-write_compose_override "${override_file}" "${container_name}"
+write_compose_override "${override_file}" "${container_name}" "${compose_project}"
 write_local_npm_cli_fixture \
   "${path_shadow_fixture_dir}" \
   "the-ai-crowd-codex-persist" \
   "codex" \
   "${path_shadow_marker}"
+seed_test_volumes "${compose_project}" "${temp_repo}"
 
 compose_files=(
   -f compose.yaml

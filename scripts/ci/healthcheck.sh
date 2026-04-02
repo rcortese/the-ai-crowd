@@ -9,7 +9,7 @@ service="the-ai-crowd"
 repo_root="$(pwd)"
 temp_root="$(create_temp_repo_root "${repo_root}")"
 temp_repo="${temp_root}/repo"
-compose_project="ai-crowd-ci-${RANDOM}${RANDOM}"
+compose_project="the-ai-crowd-ci-${RANDOM}${RANDOM}"
 container_name="${compose_project}-the-ai-crowd"
 network_name="${compose_project}_default"
 override_file="${temp_repo}/docker-compose.ci.override.yml"
@@ -20,8 +20,9 @@ fail() {
 }
 
 set_workbench_ids
+export DOCKER_ENABLE=false
 prepare_temp_repo_fixture "${temp_repo}"
-write_compose_override "${override_file}" "${container_name}"
+write_compose_override "${override_file}" "${container_name}" "${compose_project}"
 
 compose_base=(
   -f compose.yaml
@@ -78,7 +79,7 @@ wait_for_service_ready() {
   local attempts=0
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck >/dev/null 2>&1; then
+    if docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/the-ai-crowd-healthcheck >/dev/null 2>&1; then
       return 0
     fi
 
@@ -116,9 +117,10 @@ run_healthcheck() {
 
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   wait_for_cleanup
+  seed_test_volumes "${compose_project}" "${temp_repo}"
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
   wait_for_service_ready "${compose_files[@]}"
-  docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/ai-crowd-healthcheck
+  docker compose "${compose_files[@]}" exec -T "${service}" /usr/local/bin/the-ai-crowd-healthcheck
   # claude-delegator integration assertions
   docker compose "${compose_files[@]}" exec -T "${service}" bash -lc '
     set -euo pipefail
