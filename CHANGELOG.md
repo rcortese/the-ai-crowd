@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-02
+
+### Changed
+- Allowed non-root npm CLI upgrades through a persisted user prefix
+- Split Dockerfile system bootstrap from user setup and tightened Docker-aware runtime validation
+
+### Fixed
+- Fixed Docker-aware Compose setup by requiring explicit `DOCKER_GID` mapping and Compose availability checks
+- Fixed smoke and healthcheck coverage for path shadowing, persisted CLI overrides, and fixture roots
+- Excluded local data from the Docker build context
+
 ## [0.3.1] - 2026-03-31
 
 ### Changed
@@ -69,7 +80,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.2.0...v0.2.1
