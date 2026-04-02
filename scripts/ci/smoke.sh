@@ -140,9 +140,6 @@ docker compose "${compose_files[@]}" exec -T \
   [[ "$(npm config get prefix)" == "${NPM_CONFIG_PREFIX}" ]]
   [[ "$(command -v codex)" == "/opt/the-ai-crowd/npm-global-seed/bin/codex" ]]
 
-  npm install -g /workspace/projects/path-shadow-codex >/dev/null 2>&1
-  [[ "$(command -v codex)" == "${NPM_CONFIG_PREFIX}/bin/codex" ]]
-  [[ "$(codex)" == "path-shadow-codex-user-install" ]]
 
   [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]]
   [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]
@@ -159,6 +156,11 @@ docker compose "${compose_files[@]}" exec -T \
 
   check_claude_mcp_registered codex
   check_claude_mcp_registered gemini
+
+  npm install -g "${PATH_SHADOW_FIXTURE_DIR}" >/dev/null 2>&1
+  [[ "$(command -v codex)" == "${NPM_CONFIG_PREFIX}/bin/codex" ]]
+  [[ -x "/opt/the-ai-crowd/npm-global-seed/bin/codex" ]]
+  [[ "$(codex)" == "${PATH_SHADOW_MARKER}" ]]
 
   status_file="${HOME}/.local/share/the-ai-crowd/claude-mcp-bootstrap.status"
   [[ ! -s "${status_file}" ]]
