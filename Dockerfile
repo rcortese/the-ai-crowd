@@ -87,7 +87,10 @@ RUN apt-get -o Acquire::Retries=3 update && \
       docker-compose-plugin && \
     ln -sf /usr/bin/fdfind /usr/local/bin/fd && \
     ln -sf /usr/bin/batcat /usr/local/bin/bat && \
-    if ! getent group "${USER_GID}" >/dev/null; then \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN if ! getent group "${USER_GID}" >/dev/null; then \
       groupadd --gid "${USER_GID}" "${USERNAME}"; \
     fi && \
     if id -u "${USERNAME}" >/dev/null 2>&1; then \
@@ -101,9 +104,7 @@ RUN apt-get -o Acquire::Retries=3 update && \
     fi && \
     mkdir -p /workspace/projects /workspace/references /workspace/scratch /var/tmp/the-ai-crowd && \
     mkdir -p /home/${USERNAME} && \
-    chown -R "${USER_UID}:${USER_GID}" /home/${USERNAME} /workspace /var/tmp/the-ai-crowd && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    chown -R "${USER_UID}:${USER_GID}" /home/${USERNAME} /workspace /var/tmp/the-ai-crowd
 
 RUN mkdir -p "${THE_AI_CROWD_NPM_GLOBAL_SEED}" && \
     npm install -g --prefix "${THE_AI_CROWD_NPM_GLOBAL_SEED}" "${CLAUDE_CODE_PACKAGE}@${CLAUDE_CODE_VERSION}" && \
