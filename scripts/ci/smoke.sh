@@ -102,6 +102,8 @@ run_exec_cli_check() {
 docker compose "${compose_files[@]}" exec -T \
   -e EXPECTED_UID="${expected_uid}" \
   -e EXPECTED_GID="${expected_gid}" \
+  -e PATH_SHADOW_FIXTURE_DIR="${path_shadow_fixture_dir}" \
+  -e PATH_SHADOW_MARKER="${path_shadow_marker}" \
   "${service}" bash -lc '
   set -euo pipefail
 
