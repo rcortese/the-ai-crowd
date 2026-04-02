@@ -93,6 +93,24 @@ wait_for_service_ready() {
   done
 }
 
+assert_missing_docker_gid_fails_fast() {
+  local output_file
+
+  output_file="$(mktemp)"
+  if env -u DOCKER_GID docker compose "${compose_docker[@]}" config >"${output_file}" 2>&1; then
+    cat "${output_file}" >&2
+    rm -f "${output_file}"
+    fail "compose.docker.yaml unexpectedly rendered without DOCKER_GID"
+  fi
+
+  grep -q 'DOCKER_GID' "${output_file}" \
+    || { cat "${output_file}" >&2; rm -f "${output_file}"; fail "missing-variable failure did not mention DOCKER_GID"; }
+  grep -q 'Set DOCKER_GID to the GID of /var/run/docker.sock on the host' "${output_file}" \
+    || { cat "${output_file}" >&2; rm -f "${output_file}"; fail "missing-variable failure did not include the explicit remediation message"; }
+
+  rm -f "${output_file}"
+}
+
 run_healthcheck() {
   local -a compose_files=("$@")
 
@@ -123,6 +141,7 @@ run_healthcheck() {
 }
 
 run_healthcheck "${compose_base[@]}"
+assert_missing_docker_gid_fails_fast
 
 [[ -S /var/run/docker.sock ]] || fail "docker-enabled healthcheck requires /var/run/docker.sock"
 docker_gid="$(stat -c '%g' /var/run/docker.sock)"

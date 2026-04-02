@@ -6,7 +6,7 @@ Contexto: validar que um `npm install -g` feito pelo usuario em `~/.local/share/
 - [x] Teste `2`: persistencia do update manual entre recriacoes.
 Contexto: validar que a CLI atualizada manualmente continua ativa depois de derrubar e subir o container sem rebuild, por causa do bind mount da `home`.
 
-- [ ] Teste `3`: falha precoce do modo Docker-aware sem `DOCKER_GID`.
+- [x] Teste `3`: falha precoce do modo Docker-aware sem `DOCKER_GID`.
 Contexto: validar que subir com `compose.docker.yaml` sem `DOCKER_GID` falha de forma explicita, em vez de deixar o ambiente entrar quebrado.
 
 - [ ] Teste `5`: healthcheck do modo Docker-aware funcional.
