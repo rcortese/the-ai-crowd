@@ -20,8 +20,8 @@ source "${script_dir}/lib.sh"
 set_workbench_ids
 
 service="the-ai-crowd"
-temp_root="$(mktemp -d)"
 repo_root="$(pwd)"
+temp_root="$(create_temp_repo_root "${repo_root}")"
 temp_repo="${temp_root}/repo"
 compose_project="ai-crowd-upgrade-${RANDOM}${RANDOM}"
 container_name="${compose_project}-the-ai-crowd"

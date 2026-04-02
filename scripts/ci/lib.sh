@@ -8,6 +8,14 @@ set_workbench_ids() {
   export WORKBENCH_GID="${WORKBENCH_GID:-$(id -g)}"
 }
 
+create_temp_repo_root() {
+  local repo_root="$1"
+  local temp_parent="${repo_root}/tmp"
+
+  mkdir -p "${temp_parent}"
+  mktemp -d "${temp_parent}/ci-fixture.XXXXXX"
+}
+
 prepare_temp_repo_fixture() {
   local temp_repo="$1"
 
