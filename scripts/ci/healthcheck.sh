@@ -123,35 +123,49 @@ assert_missing_docker_gid_fails_fast() {
 
 run_healthcheck() {
   local -a compose_files=("$@")
+  local bootstrap_check_cmd
+  local healthcheck_cmd
+  local output_file
+
+  bootstrap_check_cmd="$(container_bootstrap_check_command)"
+  healthcheck_cmd="$(container_healthcheck_command)"
 
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
   wait_for_cleanup
   seed_test_volumes "${compose_project}" "${temp_repo}"
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
   wait_for_service_ready "${compose_files[@]}"
-  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "$(container_healthcheck_command)"
-  # claude-delegator integration assertions
+  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}"
+  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${bootstrap_check_cmd}"
+  # bootstrap status assertions
   docker compose "${compose_files[@]}" exec -T "${service}" bash -lc '
     set -euo pipefail
-    [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] || { printf "CLAUDE_PLUGIN_ROOT not set\n" >&2; exit 1; }
-    [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]] || { printf "Missing CLAUDE_PLUGIN_ROOT/rules\n" >&2; exit 1; }
-    [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]] || { printf "orchestration.md not synced\n" >&2; exit 1; }
-    if [[ "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}" == "true" ]]; then
-      unshare --user --mount true >/dev/null 2>&1 || { printf "unshare unavailable while Codex sandbox validation is enabled\n" >&2; exit 1; }
-      timeout 10 codex sandbox linux -- true >/dev/null 2>&1 || { printf "Codex Linux sandbox unavailable while validation is enabled\n" >&2; exit 1; }
-    fi
-    if [[ "${DOCKER_ENABLE:-false}" == "true" ]]; then
-      docker compose version >/dev/null 2>&1 || { printf "docker compose unavailable in docker-aware mode\n" >&2; exit 1; }
-      docker info >/dev/null 2>&1 || { printf "docker info unavailable in docker-aware mode\n" >&2; exit 1; }
-      socket_gid="$(stat -c %g /var/run/docker.sock)"
-      id -G | tr " " "\n" | grep -qx "${socket_gid}" || { printf "missing docker socket group %s\n" "${socket_gid}" >&2; exit 1; }
+    complete_file="${HOME}/.local/share/the-ai-crowd/bootstrap-validation.complete"
+    [[ -f "${complete_file}" ]] || { printf "bootstrap validation did not complete\n" >&2; exit 1; }
+    status_file="${HOME}/.local/share/the-ai-crowd/bootstrap-validation.status"
+    if [[ -s "${status_file}" ]]; then
+      printf "bootstrap validation degraded: %s\n" "$(cat "${status_file}")" >&2
+      exit 1
     fi
     status_file="${HOME}/.local/share/the-ai-crowd/claude-mcp-bootstrap.status"
     if [[ -s "${status_file}" ]]; then
-      printf "claude-delegator bootstrap degraded: %s\n" "$(cat "${status_file}")" >&2
+      printf "claude MCP bootstrap degraded: %s\n" "$(cat "${status_file}")" >&2
       exit 1
     fi
   '
+  output_file="$(mktemp)"
+  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc \
+    'printf "%s\n" "forced bootstrap validation failure" > "${HOME}/.local/share/the-ai-crowd/bootstrap-validation.status"'
+  if docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}" >"${output_file}" 2>&1; then
+    cat "${output_file}" >&2
+    rm -f "${output_file}"
+    fail "healthcheck unexpectedly passed with degraded bootstrap validation status"
+  fi
+  grep -q 'bootstrap validation degraded' "${output_file}" \
+    || { cat "${output_file}" >&2; rm -f "${output_file}"; fail "healthcheck failure did not mention degraded bootstrap validation"; }
+  rm -f "${output_file}"
+  docker compose "${compose_files[@]}" exec -T "${service}" bash -lc \
+    ': > "${HOME}/.local/share/the-ai-crowd/bootstrap-validation.status"'
   docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null
   wait_for_cleanup
 }

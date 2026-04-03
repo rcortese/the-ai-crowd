@@ -54,6 +54,16 @@ fi
 EOF
 }
 
+container_bootstrap_check_command() {
+  cat <<'EOF'
+if [[ -x /usr/local/bin/the-ai-crowd-bootstrap-check ]]; then
+  exec /usr/local/bin/the-ai-crowd-bootstrap-check
+else
+  exec /usr/local/bin/ai-crowd-bootstrap-check
+fi
+EOF
+}
+
 # compose_files and service are caller-set globals
 # shellcheck disable=SC2154
 wait_for_service_ready() {

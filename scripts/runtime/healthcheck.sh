@@ -6,10 +6,6 @@ fail() {
   exit 1
 }
 
-warn() {
-  printf 'The AI Crowd healthcheck warning: %s\n' "$*" >&2
-}
-
 require_dir() {
   local path="$1"
   [[ -d "${path}" ]] || fail "missing directory: ${path}"
@@ -39,6 +35,8 @@ check_claude_mcp_registered() {
 home_dir="${HOME:-/home/operator}"
 the_ai_crowd_state_dir="${home_dir}/.local/share/the-ai-crowd"
 claude_mcp_status_path="${the_ai_crowd_state_dir}/claude-mcp-bootstrap.status"
+bootstrap_validation_status_path="${the_ai_crowd_state_dir}/bootstrap-validation.status"
+bootstrap_validation_complete_path="${the_ai_crowd_state_dir}/bootstrap-validation.complete"
 
 require_dir "${home_dir}"
 require_dir "${home_dir}/.config"
@@ -57,11 +55,6 @@ check_git_config init.defaultBranch main
 check_git_config pull.rebase false
 check_git_config core.editor vim
 
-if [[ "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}" == "true" ]]; then
-  unshare --user --mount true >/dev/null 2>&1 || fail "Codex sandbox validation enabled but unshare for user and mount namespaces is unavailable"
-  timeout 10 codex sandbox linux -- true >/dev/null 2>&1 || fail "Codex sandbox validation enabled but Codex Linux sandbox is unavailable"
-fi
-
 if [[ "${DOCKER_ENABLE:-false}" == "true" ]]; then
   [[ -S /var/run/docker.sock ]] || fail "docker mode enabled but /var/run/docker.sock is not available"
   docker compose version >/dev/null 2>&1 || fail "docker mode enabled but docker compose is unavailable"
@@ -72,25 +65,18 @@ else
   [[ -z "${DOCKER_HOST:-}" ]] || fail "docker mode disabled but DOCKER_HOST is set"
 fi
 
-# claude-delegator: registration is required for a healthy runtime.
+[[ -f "${bootstrap_validation_complete_path}" ]] || fail "bootstrap validation has not completed"
+
+if [[ -s "${bootstrap_validation_status_path}" ]]; then
+  status_summary="$(paste -sd ';' "${bootstrap_validation_status_path}")"
+  fail "bootstrap validation degraded: ${status_summary}"
+fi
+
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
-  if [[ ! -f "${home_dir}/.claude/rules/delegator/orchestration.md" ]]; then
-    fail "claude-delegator rules not installed"
-  fi
-
-  if [[ ! -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]]; then
-    fail "gemini MCP bridge missing"
-  elif ! node --check "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" >/dev/null 2>&1; then
-    fail "gemini MCP bridge syntax error"
-  fi
-
-  if ! check_claude_mcp_registered codex; then
-    fail "claude MCP is not registered: codex"
-  fi
-
-  if ! check_claude_mcp_registered gemini; then
-    fail "claude MCP is not registered: gemini"
-  fi
+  [[ -f "${home_dir}/.claude/rules/delegator/orchestration.md" ]] || fail "claude-delegator rules not installed"
+  [[ -f "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" ]] || fail "gemini MCP bridge missing"
+  check_claude_mcp_registered codex || fail "claude MCP is not registered: codex"
+  check_claude_mcp_registered gemini || fail "claude MCP is not registered: gemini"
 fi
 
 if [[ -s "${claude_mcp_status_path}" ]]; then

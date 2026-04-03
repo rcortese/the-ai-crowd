@@ -57,6 +57,7 @@ The entrypoint is responsible for the operational baseline:
 4. apply default Git settings when they are unset
 5. sync delegated Claude rules into persisted state
 6. attempt best-effort MCP registration for Codex and Gemini
+7. run one-time bootstrap validation and persist its status for the runtime healthcheck
 
 That startup contract explains why the image is the source of truth for tooling while state stays outside the image.
 

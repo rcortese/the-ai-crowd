@@ -23,6 +23,9 @@ jobs:
       - name: Verify runtime healthcheck script syntax
         run: bash -n scripts/runtime/healthcheck.sh
 
+      - name: Verify runtime bootstrap-check script syntax
+        run: bash -n scripts/runtime/bootstrap-check.sh
+
       - name: Verify CI healthcheck script syntax
         run: bash -n scripts/ci/healthcheck.sh
 

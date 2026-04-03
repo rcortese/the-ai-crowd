@@ -82,10 +82,21 @@ The container healthcheck verifies:
 - expected directories exist
 - bundled CLIs are on `PATH`
 - Git defaults are present
-- Codex sandbox validation passes when enabled
 - Docker mode matches the runtime socket state
+- bootstrap validation completed successfully at startup
+- delegated MCP rules, bridge files, and registrations are still present
+- delegated MCP bootstrap status is clean
+
+At startup, the entrypoint also runs a one-time bootstrap validation that covers the heavier invariants:
+
+- Codex sandbox validation passes when enabled
 - delegated MCP rules, bridge files, and registrations are present
-- the bootstrap status file is empty
+
+Bootstrap validation state is recorded in:
+
+- `data/home/.local/share/the-ai-crowd/bootstrap-validation.complete`
+- `data/home/.local/share/the-ai-crowd/bootstrap-validation.status`
+- `data/home/.local/share/the-ai-crowd/claude-mcp-bootstrap.status`
 
 ## Upgrades
 
@@ -139,6 +150,8 @@ Use an image pull or rebuild when you want updated base OS packages or a new def
 Check:
 
 - `data/home/.local/share/the-ai-crowd/claude-mcp-bootstrap.status`
+- `data/home/.local/share/the-ai-crowd/bootstrap-validation.complete`
+- `data/home/.local/share/the-ai-crowd/bootstrap-validation.status`
 - `~/.claude.json` inside the container
 - whether `claude`, `codex`, `gemini`, and `node` are available on `PATH`
 - whether `docker ps` shows the container as `healthy`, not just `Up`

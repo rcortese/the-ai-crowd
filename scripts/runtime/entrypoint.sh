@@ -9,6 +9,8 @@ claude_config_path="${home_dir}/.claude.json"
 claude_config_backup_path="${home_dir}/.claude.json.backup"
 the_ai_crowd_state_dir="${home_dir}/.local/share/the-ai-crowd"
 claude_mcp_status_path="${the_ai_crowd_state_dir}/claude-mcp-bootstrap.status"
+bootstrap_validation_status_path="${the_ai_crowd_state_dir}/bootstrap-validation.status"
+bootstrap_validation_complete_path="${the_ai_crowd_state_dir}/bootstrap-validation.complete"
 the_ai_crowd_npm_global_prefix="${THE_AI_CROWD_NPM_GLOBAL_PREFIX:-${home_dir}/.local/share/the-ai-crowd/npm-global}"
 
 ensure_directory() {
@@ -121,6 +123,15 @@ warn_claude_mcp_bootstrap() {
   printf 'WARNING: %s\n' "${issue}" >&2
 }
 
+reset_bootstrap_validation_status() {
+  : > "${bootstrap_validation_status_path}"
+  rm -f "${bootstrap_validation_complete_path}"
+}
+
+mark_bootstrap_validation_complete() {
+  : > "${bootstrap_validation_complete_path}"
+}
+
 register_claude_mcp() {
   local mcp_name="$1"
   local command_name="$2"
@@ -218,6 +229,7 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] && [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]];
 fi
 
 reset_claude_mcp_status
+reset_bootstrap_validation_status
 if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
   if ! command -v claude >/dev/null 2>&1; then
     warn_claude_mcp_bootstrap "The AI Crowd could not register delegated MCP servers because the Claude CLI is missing. Shell access and direct Gemini/Codex CLI usage remain available, but the container will stay unhealthy until Claude MCP registration can succeed."
@@ -227,6 +239,14 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
     register_claude_mcp gemini node "${CLAUDE_PLUGIN_ROOT}/server/gemini/index.js" || true
   fi
 fi
+
+if ! /usr/local/bin/the-ai-crowd-bootstrap-check 2>"${bootstrap_validation_status_path}"; then
+  while IFS= read -r bootstrap_issue; do
+    [[ -n "${bootstrap_issue}" ]] || continue
+    printf 'WARNING: %s\n' "${bootstrap_issue}" >&2
+  done < "${bootstrap_validation_status_path}"
+fi
+mark_bootstrap_validation_complete
 
 cat <<'EOF2'
 The AI Crowd container is ready.

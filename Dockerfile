@@ -125,10 +125,12 @@ RUN mkdir -p /opt/claude-delegator \
 ENV CLAUDE_PLUGIN_ROOT=/opt/claude-delegator
 
 COPY scripts/runtime/entrypoint.sh /usr/local/bin/the-ai-crowd-entrypoint
+COPY scripts/runtime/bootstrap-check.sh /usr/local/bin/the-ai-crowd-bootstrap-check
 COPY scripts/runtime/healthcheck.sh /usr/local/bin/the-ai-crowd-healthcheck
 COPY scripts/runtime/github.com.known_hosts /etc/ssh/ssh_known_hosts
 
 RUN chmod 0755 /usr/local/bin/the-ai-crowd-entrypoint
+RUN chmod 0755 /usr/local/bin/the-ai-crowd-bootstrap-check
 RUN chmod 0755 /usr/local/bin/the-ai-crowd-healthcheck
 RUN chmod 0644 /etc/ssh/ssh_known_hosts
 
