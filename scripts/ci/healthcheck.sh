@@ -136,15 +136,15 @@ run_healthcheck() {
     [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]] || { printf "CLAUDE_PLUGIN_ROOT not set\n" >&2; exit 1; }
     [[ -d "${CLAUDE_PLUGIN_ROOT}/rules" ]] || { printf "Missing CLAUDE_PLUGIN_ROOT/rules\n" >&2; exit 1; }
     [[ -f "${HOME}/.claude/rules/delegator/orchestration.md" ]] || { printf "orchestration.md not synced\n" >&2; exit 1; }
+    if [[ "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}" == "true" ]]; then
+      unshare --user --mount true >/dev/null 2>&1 || { printf "unshare unavailable while Codex sandbox validation is enabled\n" >&2; exit 1; }
+      timeout 10 codex sandbox linux -- true >/dev/null 2>&1 || { printf "Codex Linux sandbox unavailable while validation is enabled\n" >&2; exit 1; }
+    fi
     if [[ "${DOCKER_ENABLE:-false}" == "true" ]]; then
       docker compose version >/dev/null 2>&1 || { printf "docker compose unavailable in docker-aware mode\n" >&2; exit 1; }
       docker info >/dev/null 2>&1 || { printf "docker info unavailable in docker-aware mode\n" >&2; exit 1; }
       socket_gid="$(stat -c %g /var/run/docker.sock)"
       id -G | tr " " "\n" | grep -qx "${socket_gid}" || { printf "missing docker socket group %s\n" "${socket_gid}" >&2; exit 1; }
-      if [[ "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}" == "true" ]]; then
-        unshare --user --mount true >/dev/null 2>&1 || { printf "unshare unavailable in docker-aware mode\n" >&2; exit 1; }
-        timeout 10 codex sandbox linux -- true >/dev/null 2>&1 || { printf "Codex Linux sandbox unavailable in docker-aware mode\n" >&2; exit 1; }
-      fi
     fi
     status_file="${HOME}/.local/share/the-ai-crowd/claude-mcp-bootstrap.status"
     if [[ -s "${status_file}" ]]; then

@@ -1,11 +1,10 @@
 services:
   the-ai-crowd:
     environment:
+      # Enable the optional overlay that exposes the host Docker daemon inside the workbench.
       DOCKER_ENABLE: "true"
-      THE_AI_CROWD_VALIDATE_CODEX_SANDBOX: "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}"
-    security_opt:
-      - seccomp:unconfined
     group_add:
       - "${DOCKER_GID:?Set DOCKER_GID to the GID of /var/run/docker.sock on the host}"
     volumes:
+      # Only the Docker-aware overlay mounts the host daemon socket.
       - /var/run/docker.sock:/var/run/docker.sock

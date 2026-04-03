@@ -37,9 +37,9 @@ Think of it as a durable workbench with three specialists already at the table:
 
 1. **Environment:** A single Ubuntu 24.04 container runs all bundled CLIs.
 2. **Persistence:** Host bind mounts preserve your home directory, projects, references, scratch space, and SSH state across restarts.
-3. **Integration:** Claude can register Gemini and Codex as local stdio MCP workers through `claude-delegator`.
+3. **Integration:** Claude can register Gemini and Codex as local stdio MCP workers through `claude-delegator`, with the Codex Linux sandbox available in the default runtime.
 
-An optional overlay provides Docker access from inside the workbench, though it is intentionally disabled by default.
+An optional overlay provides host Docker access from inside the workbench, though it is intentionally disabled by default.
 
 ## Quick Start
 
@@ -78,16 +78,17 @@ Your persistent terminal workspace is now ready to use.
 
 | Mode | When to use it | Command |
 | --- | --- | --- |
-| **Pull-first** | Standard path for most users | `docker compose up -d` |
+| **Pull-first** | Standard path for most users, including Codex sandbox support | `docker compose up -d` |
 | **Build from source** | Maintain the image or change pinned versions | `docker compose -f compose.yaml -f compose.build.yaml up -d --build` |
-| **Docker-aware** | Allow the container to communicate with the host Docker daemon and enable the Codex Linux sandbox | `DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d` |
+| **Docker-aware** | Allow the container to communicate with the host Docker daemon | `DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d` |
 
 ## What's Included
 
 - A single container with Claude Code, Gemini CLI, Codex CLI, Git, SSH, and daily shell tools pre-installed.
 - Persistent state through host bind mounts.
 - Local-first delegation via `claude-delegator`.
-- Optional Docker-aware overlay for host Docker daemon access, explicit `DOCKER_GID` mapping, and Codex Linux sandbox compatibility.
+- Codex Linux sandbox compatibility in the default runtime.
+- Optional Docker-aware overlay for host Docker daemon access and explicit `DOCKER_GID` mapping.
 - User-scoped npm global prefix under `~/.local/share/the-ai-crowd/npm-global`, so `npm install -g` can update bundled CLIs without `root`.
 
 ## Persistence at a Glance
@@ -114,7 +115,9 @@ The base runtime secures the container by:
 - Using `tmpfs` for `/tmp` and `/run`.
 - Defining explicit writable paths through bind mounts.
 
-The Docker-aware mode intentionally expands this trust boundary by mounting `/var/run/docker.sock`, adding the host socket group selected through `DOCKER_GID`, and relaxing seccomp enough for the Codex Linux sandbox to create namespaces. Use this mode only when necessary.
+The default runtime also relaxes seccomp enough for `unshare` and `codex sandbox linux`, because Codex delegation depends on sandbox support being available without an extra overlay.
+
+The Docker-aware mode intentionally expands this trust boundary further by mounting `/var/run/docker.sock` and adding the host socket group selected through `DOCKER_GID`. Use this mode only when necessary.
 
 ## Documentation Map
 

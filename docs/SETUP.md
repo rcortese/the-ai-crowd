@@ -90,7 +90,7 @@ docker exec -it the-ai-crowd bash -l
 
 ## Optional Docker-Aware Mode
 
-Use this only when the workbench must talk to the host Docker daemon or when you need the Codex Linux sandbox to run inside the workbench. Before starting, set `DOCKER_GID="$(stat -c %g /var/run/docker.sock)"` in `.env` or your shell.
+Use this only when the workbench must talk to the host Docker daemon. The Codex Linux sandbox is part of the default runtime. Before starting, set `DOCKER_GID="$(stat -c %g /var/run/docker.sock)"` in `.env` or your shell.
 
 ```bash
 DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d
@@ -99,11 +99,10 @@ DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -
 This overlay:
 
 - sets `DOCKER_ENABLE=true`
-- relaxes seccomp enough for `unshare` and `codex sandbox linux`
 - mounts `/var/run/docker.sock`
 - adds the host Docker group via `DOCKER_GID`
 
-The image includes the `docker` CLI and `docker compose` plugin. The overlay grants daemon access and enables the Codex Linux sandbox; it does not install the Docker daemon.
+The image includes the `docker` CLI and `docker compose` plugin. The overlay grants daemon access; it does not install the Docker daemon.
 
 ## Required Environment Variables
 
@@ -113,7 +112,7 @@ The image includes the `docker` CLI and `docker compose` plugin. The overlay gra
 | `WORKBENCH_UID` | yes | yes | Must match the owner of `./data` |
 | `WORKBENCH_GID` | yes | yes | Must match the owner of `./data` |
 | `WORKBENCH_USER` | keep default | optional override | Only change for local builds |
-| `DOCKER_GID` | no | no | Required with `compose.docker.yaml`; set it to `stat -c %g /var/run/docker.sock` on the host |
+| `DOCKER_GID` | no | no | Required only with `compose.docker.yaml`; set it to `stat -c %g /var/run/docker.sock` on the host |
 
 Optional API keys:
 
@@ -139,6 +138,7 @@ Then confirm the basics:
 git config --global --get init.defaultBranch
 git config --global --get pull.rebase
 git config --global --get core.editor
+timeout 10 codex sandbox linux -- true
 ```
 
 If startup fails immediately, the most likely issue is ownership mismatch between `WORKBENCH_UID:WORKBENCH_GID` and the `./data` tree.
