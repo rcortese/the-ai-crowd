@@ -82,9 +82,9 @@ The AI Crowd is not a zero-trust sandbox.
 
 Those controls narrow the runtime, but they do not change the trust model: the container can still access the repositories and state you mount. The base runtime also relaxes seccomp enough for Codex sandbox namespace creation. Docker-aware mode expands trust further because the host Docker daemon becomes reachable.
 
-In practice, the default runtime uses `seccomp:unconfined`. That choice expands the syscall surface available inside the container compared with a tighter seccomp profile, so it reduces one of the isolation barriers that would otherwise limit a compromised process.
+In practice, the default runtime uses a repo-local seccomp profile rather than `seccomp:unconfined`. The profile is an intentional fork of Docker's default-deny baseline, not a syscall-minimal profile; it reopens the namespace, mount, and process syscalls required by `unshare` and `codex sandbox linux`.
 
-This project accepts that tradeoff because `codex sandbox linux` depends on namespace creation through `unshare`, and that workflow must work in the default runtime for local Codex delegation to stay predictable. Without that seccomp relaxation, sandbox-backed Codex delegation fails unless operators add extra runtime overrides.
+This project accepts that tradeoff because `codex sandbox linux` depends on namespace creation through `unshare`, and that workflow must work in the default runtime for local Codex delegation to stay predictable. Without those seccomp exceptions, sandbox-backed Codex delegation fails unless operators add extra runtime overrides. The maintained profile is therefore optimized for reproducible pull-first behavior and audited exceptions, not for the smallest theoretical syscall set.
 
 This is a functional requirement for the default runtime, not a general claim that the container is safe for untrusted code. The trust model stays the same: The AI Crowd is still a high-trust operator environment with access to mounted repos and state. `compose.docker.yaml` is not part of this requirement; that overlay only adds host Docker daemon access and should not be treated as the fix for namespace-related sandbox failures.
 

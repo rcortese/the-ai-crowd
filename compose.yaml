@@ -16,7 +16,7 @@ services:
     security_opt:
       - no-new-privileges:true
       # Codex delegation expects `codex sandbox linux` to work in the default runtime.
-      - seccomp:unconfined
+      - seccomp:./seccomp/the-ai-crowd.json
     cap_drop:
       - ALL
     stdin_open: true
