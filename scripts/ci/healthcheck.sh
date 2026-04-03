@@ -20,12 +20,7 @@ fail() {
 }
 
 set_workbench_ids
-export DOCKER_ENABLE=false
-if [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
-  export THE_AI_CROWD_VALIDATE_CODEX_SANDBOX=false
-else
-  export THE_AI_CROWD_VALIDATE_CODEX_SANDBOX="${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}"
-fi
+set_ci_runtime_env
 prepare_temp_repo_fixture "${temp_repo}"
 write_compose_override "${override_file}" "${container_name}" "${compose_project}"
 

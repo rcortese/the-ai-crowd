@@ -18,7 +18,7 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_dir}/lib.sh"
 
 set_workbench_ids
-export DOCKER_ENABLE=false
+set_ci_runtime_env
 
 service="the-ai-crowd"
 repo_root="$(pwd)"

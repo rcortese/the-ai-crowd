@@ -14,7 +14,7 @@ container_name="${compose_project}-the-ai-crowd"
 override_file="${temp_repo}/docker-compose.ci.override.yml"
 
 set_workbench_ids
-export DOCKER_ENABLE=false
+set_ci_runtime_env
 prepare_temp_repo_fixture "${temp_repo}"
 write_compose_override "${override_file}" "${container_name}" "${compose_project}"
 

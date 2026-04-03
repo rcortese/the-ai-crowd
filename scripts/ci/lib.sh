@@ -8,6 +8,16 @@ set_workbench_ids() {
   export WORKBENCH_GID="${WORKBENCH_GID:-$(id -g)}"
 }
 
+set_ci_runtime_env() {
+  export DOCKER_ENABLE=false
+
+  if [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
+    export THE_AI_CROWD_VALIDATE_CODEX_SANDBOX=false
+  else
+    export THE_AI_CROWD_VALIDATE_CODEX_SANDBOX="${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}"
+  fi
+}
+
 create_temp_repo_root() {
   local repo_root="$1"
   local temp_parent="${CI_FIXTURE_ROOT:-${repo_root}/tmp}"
