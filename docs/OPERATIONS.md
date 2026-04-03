@@ -6,6 +6,7 @@ Use this document after the container already exists. For initial bootstrap, rea
 
 ```bash
 docker compose up -d
+docker ps --filter name=the-ai-crowd --format 'table {{.Names}}\t{{.Status}}'
 docker exec -it the-ai-crowd bash -l
 docker compose down
 docker compose -f compose.yaml -f compose.build.yaml up -d --build
@@ -13,6 +14,8 @@ docker compose -f compose.yaml -f compose.docker.yaml up -d
 bash scripts/ci/smoke.sh
 bash scripts/ci/healthcheck.sh
 ```
+
+For the first boot of the published image, follow [SETUP.md](SETUP.md#path-a-pull-first): pull the image explicitly, start it, and wait for `healthy` before opening a shell. After that initial bootstrap, `docker compose up -d` is the normal day-to-day start command for the already-pulled image.
 
 ## Authentication
 
@@ -105,7 +108,10 @@ Bootstrap validation state is recorded in:
 ```bash
 docker pull rcortese/the-ai-crowd:latest
 docker compose up -d
+docker ps --filter name=the-ai-crowd --format 'table {{.Names}}\t{{.Status}}'
 ```
+
+Use this when you want the latest published image. Wait for the status to show `healthy` before treating the recreate as complete.
 
 ### Local-build workflow
 

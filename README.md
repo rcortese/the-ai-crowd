@@ -57,12 +57,16 @@ Edit `.env` and configure at least:
 - `WORKBENCH_UID`
 - `WORKBENCH_GID`
 
-Start the published image and open a login shell:
+Pull the published image, start it, confirm it reached `healthy`, and then open a login shell:
 
 ```bash
+docker pull rcortese/the-ai-crowd:latest
 docker compose up -d
+docker ps --filter name=the-ai-crowd --format 'table {{.Names}}\t{{.Status}}'
 docker exec -it the-ai-crowd bash -l
 ```
+
+On first boot, wait for the container status to show `healthy`, not only `Up`, before entering the shell. The full pull-first bootstrap path lives in [Setup](docs/SETUP.md#path-a-pull-first).
 
 Authenticate the bundled CLIs from inside the container:
 
@@ -78,7 +82,7 @@ Your persistent terminal workspace is now ready to use.
 
 | Mode | When to use it | Command |
 | --- | --- | --- |
-| **Pull-first** | Standard path for most users, including Codex sandbox support | `docker compose up -d` |
+| **Pull-first** | Standard path for most users, including Codex sandbox support | `docker pull rcortese/the-ai-crowd:latest` then `docker compose up -d` |
 | **Build from source** | Maintain the image or change pinned versions | `docker compose -f compose.yaml -f compose.build.yaml up -d --build` |
 | **Docker-aware** | Allow the container to communicate with the host Docker daemon | `DOCKER_GID="$(stat -c %g /var/run/docker.sock)" docker compose -f compose.yaml -f compose.docker.yaml up -d` |
 

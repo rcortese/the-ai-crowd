@@ -50,15 +50,16 @@ cp docs/gitconfig.example data/home/.gitconfig
 
 If you skip this step, the entrypoint still applies default values for `init.defaultBranch`, `pull.rebase`, and `core.editor` when they are unset.
 
-### 3. Start the workbench
+### 3. Pull, start, and confirm the workbench
 
 ```bash
 docker pull rcortese/the-ai-crowd:latest
 docker compose up -d
+docker ps --filter name=the-ai-crowd --format 'table {{.Names}}\t{{.Status}}'
 docker exec -it the-ai-crowd bash -l
 ```
 
-The container starts in `/workspace/projects` as the configured non-root user.
+On first boot, wait for `docker ps` to show the container as `healthy`, not only `Up`, before entering the shell. The container starts in `/workspace/projects` as the configured non-root user.
 Bundled npm CLIs are exposed through a user-writable prefix at `~/.local/share/the-ai-crowd/npm-global`, so future `npm install -g ...` updates do not require `root`.
 
 ## Path B: Build From Source
