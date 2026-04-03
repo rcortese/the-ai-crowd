@@ -2,6 +2,7 @@ services:
   the-ai-crowd:
     environment:
       DOCKER_ENABLE: "true"
+      THE_AI_CROWD_VALIDATE_CODEX_SANDBOX: "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}"
     security_opt:
       - seccomp:unconfined
     group_add:
