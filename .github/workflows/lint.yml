@@ -35,11 +35,17 @@ jobs:
       - name: Verify CI helper library syntax
         run: bash -n scripts/ci/lib.sh
 
+      - name: Verify config consistency script syntax
+        run: bash -n scripts/ci/check-config-consistency.sh
+
       - name: Run ShellCheck on shell scripts
         uses: ludeeus/action-shellcheck@2.0.0
         with:
           check_together: 'yes'
           scandir: ./scripts
+
+      - name: Validate Docker and release config consistency
+        run: bash scripts/ci/check-config-consistency.sh
 
       - name: Validate base Compose configuration
         run: docker compose -f compose.yaml config
