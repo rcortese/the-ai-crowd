@@ -7,24 +7,8 @@ source "${script_dir}/lib.sh"
 
 service="the-ai-crowd"
 repo_root="$(pwd)"
-temp_root="$(create_temp_repo_root "${repo_root}")"
-temp_repo="${temp_root}/repo"
-compose_project="the-ai-crowd-ci-${RANDOM}${RANDOM}"
-container_name="${compose_project}-the-ai-crowd"
-override_file="${temp_repo}/docker-compose.ci.override.yml"
-
-set_workbench_ids
-set_ci_runtime_env
-prepare_temp_repo_fixture "${temp_repo}"
-write_compose_override "${override_file}" "${container_name}" "${compose_project}"
-
-compose_files=(
-  -f compose.yaml
-  -f compose.build.yaml
-  -f docker-compose.ci.override.yml
-)
-
-export COMPOSE_PROJECT_NAME="${compose_project}"
+setup_ci_compose_fixture "${repo_root}" "the-ai-crowd-ci"
+set_compose_files compose.yaml compose.build.yaml docker-compose.ci.override.yml
 
 dockerfile_arg_default() {
   local arg_name="$1"
@@ -37,10 +21,7 @@ dockerfile_arg_default() {
 }
 
 cleanup() {
-  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
-  remove_test_volumes "${compose_project}"
-  chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
-  rm -rf "${temp_root}"
+  cleanup_ci_compose_fixture "${compose_project}" "${temp_root}" "${compose_files[@]}"
 }
 
 trap cleanup EXIT
@@ -78,7 +59,7 @@ container_id="$(docker compose "${compose_files[@]}" ps -q "${service}")"
 
 docker inspect --format '{{.State.Running}}' "${container_id}" | grep -qx true
 
-wait_for_service_ready
+wait_for_service_ready "${service}" "${compose_files[@]}"
 
 run_exec_cli_check() {
   local version_cmd="$1"

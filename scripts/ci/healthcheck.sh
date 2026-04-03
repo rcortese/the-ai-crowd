@@ -7,22 +7,13 @@ source "${script_dir}/lib.sh"
 
 service="the-ai-crowd"
 repo_root="$(pwd)"
-temp_root="$(create_temp_repo_root "${repo_root}")"
-temp_repo="${temp_root}/repo"
-compose_project="the-ai-crowd-ci-${RANDOM}${RANDOM}"
-container_name="${compose_project}-the-ai-crowd"
+setup_ci_compose_fixture "${repo_root}" "the-ai-crowd-ci"
 network_name="${compose_project}_default"
-override_file="${temp_repo}/docker-compose.ci.override.yml"
 
 fail() {
   printf 'The AI Crowd CI healthcheck failed: %s\n' "$*" >&2
   exit 1
 }
-
-set_workbench_ids
-set_ci_runtime_env
-prepare_temp_repo_fixture "${temp_repo}"
-write_compose_override "${override_file}" "${container_name}" "${compose_project}"
 
 compose_base=(
   -f compose.yaml
@@ -36,12 +27,9 @@ compose_docker=(
   -f compose.docker.yaml
   -f docker-compose.ci.override.yml
 )
-
-export COMPOSE_PROJECT_NAME="${compose_project}"
-
 cleanup() {
-  docker compose "${compose_base[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
-  docker compose "${compose_docker[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  compose_down_quiet "${compose_base[@]}"
+  compose_down_quiet "${compose_docker[@]}"
   remove_test_volumes "${compose_project}"
   wait_for_cleanup
   chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
@@ -75,29 +63,6 @@ wait_for_cleanup() {
   done
 }
 
-wait_for_service_ready() {
-  local -a compose_files=("$@")
-  local attempts=0
-  local healthcheck_cmd
-
-  healthcheck_cmd="$(container_healthcheck_command)"
-
-  while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}" >/dev/null 2>&1; then
-      return 0
-    fi
-
-    attempts=$((attempts + 1))
-    if (( attempts > CI_WAIT_TIMEOUT )); then
-      printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
-      docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
-      exit 1
-    fi
-
-    sleep 1
-  done
-}
-
 assert_missing_docker_gid_fails_fast() {
   local output_file
 
@@ -125,11 +90,11 @@ run_healthcheck() {
   bootstrap_check_cmd="$(container_bootstrap_check_command)"
   healthcheck_cmd="$(container_healthcheck_command)"
 
-  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
+  compose_down_quiet "${compose_files[@]}"
   wait_for_cleanup
   seed_test_volumes "${compose_project}" "${temp_repo}"
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
-  wait_for_service_ready "${compose_files[@]}"
+  wait_for_service_ready "${service}" "${compose_files[@]}"
   docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}"
   docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${bootstrap_check_cmd}"
   # bootstrap status assertions

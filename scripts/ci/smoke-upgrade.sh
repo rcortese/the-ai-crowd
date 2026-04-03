@@ -14,57 +14,37 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/ci/lib.sh
-# shellcheck disable=SC1091
 source "${script_dir}/lib.sh"
-
-set_workbench_ids
-set_ci_runtime_env
 
 service="the-ai-crowd"
 repo_root="$(pwd)"
-temp_root="$(create_temp_repo_root "${repo_root}")"
-temp_repo="${temp_root}/repo"
-compose_project="the-ai-crowd-upgrade-${RANDOM}${RANDOM}"
-container_name="${compose_project}-the-ai-crowd"
-override_file="${temp_repo}/docker-compose.ci.override.yml"
+setup_ci_compose_fixture "${repo_root}" "the-ai-crowd-upgrade"
 path_shadow_fixture_dir="${temp_repo}/data/projects/path-shadow-codex-persist"
 path_shadow_marker="path-shadow-codex-persisted"
 
-prepare_temp_repo_fixture "${temp_repo}"
-write_compose_override "${override_file}" "${container_name}" "${compose_project}"
 write_local_npm_cli_fixture \
   "${path_shadow_fixture_dir}" \
   "the-ai-crowd-codex-persist" \
   "codex" \
   "${path_shadow_marker}"
 seed_test_volumes "${compose_project}" "${temp_repo}"
-
-compose_files=(
-  -f compose.yaml
-  -f compose.build.yaml
-  -f docker-compose.ci.override.yml
-)
-
-export COMPOSE_PROJECT_NAME="${compose_project}"
+set_compose_files compose.yaml compose.build.yaml docker-compose.ci.override.yml
 
 cleanup() {
-  docker compose "${compose_files[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
-  remove_test_volumes "${compose_project}"
-  chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
-  rm -rf "${temp_root}"
+  cleanup_ci_compose_fixture "${compose_project}" "${temp_root}" "${compose_files[@]}"
 }
 
 trap cleanup EXIT
 
 restart_and_wait() {
   docker compose "${compose_files[@]}" restart "${service}" >/dev/null
-  wait_for_service_ready
+  wait_for_service_ready "${service}" "${compose_files[@]}"
 }
 
 recreate_and_wait() {
   docker compose "${compose_files[@]}" down --remove-orphans >/dev/null
   docker compose "${compose_files[@]}" up -d --no-build "${service}"
-  wait_for_service_ready
+  wait_for_service_ready "${service}" "${compose_files[@]}"
 }
 
 assert_registered() {
@@ -94,7 +74,7 @@ assert_user_codex_override() {
 
 cd "${temp_repo}"
 docker compose "${compose_files[@]}" up -d --no-build "${service}"
-wait_for_service_ready
+wait_for_service_ready "${service}" "${compose_files[@]}"
 
 printf '[smoke-upgrade] === Persisted-state recovery scenarios ===\n'
 

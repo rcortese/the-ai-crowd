@@ -26,6 +26,33 @@ create_temp_repo_root() {
   mktemp -d "${temp_parent}/ci-fixture.XXXXXX"
 }
 
+setup_ci_compose_fixture() {
+  local repo_root="$1"
+  local compose_project_prefix="${2:-the-ai-crowd-ci}"
+
+  temp_root="$(create_temp_repo_root "${repo_root}")"
+  temp_repo="${temp_root}/repo"
+  compose_project="${compose_project_prefix}-${RANDOM}${RANDOM}"
+  container_name="${compose_project}-the-ai-crowd"
+  override_file="${temp_repo}/docker-compose.ci.override.yml"
+
+  set_workbench_ids
+  set_ci_runtime_env
+  prepare_temp_repo_fixture "${temp_repo}"
+  write_compose_override "${override_file}" "${container_name}" "${compose_project}"
+
+  export COMPOSE_PROJECT_NAME="${compose_project}"
+}
+
+set_compose_files() {
+  compose_files=()
+
+  while (($# > 0)); do
+    compose_files+=(-f "$1")
+    shift
+  done
+}
+
 prepare_temp_repo_fixture() {
   local temp_repo="$1"
 
@@ -84,28 +111,47 @@ fi
 EOF
 }
 
-# compose_files and service are caller-set globals
-# shellcheck disable=SC2154
 wait_for_service_ready() {
+  local service="$1"
+  shift
+  local -a compose_args=("$@")
   local attempts=0
   local healthcheck_cmd
 
   healthcheck_cmd="$(container_healthcheck_command)"
 
   while true; do
-    if docker compose "${compose_files[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}" >/dev/null 2>&1; then
+    if docker compose "${compose_args[@]}" exec -T "${service}" bash -lc "${healthcheck_cmd}" >/dev/null 2>&1; then
       return 0
     fi
 
     attempts=$((attempts + 1))
     if (( attempts > CI_WAIT_TIMEOUT )); then
       printf 'Timed out waiting for %s readiness.\n' "${service}" >&2
-      docker compose "${compose_files[@]}" logs --no-color --tail=80 "${service}" >&2 || true
+      docker compose "${compose_args[@]}" logs --no-color --tail=80 "${service}" >&2 || true
       return 1
     fi
 
     sleep 1
   done
+}
+
+compose_down_quiet() {
+  docker compose "$@" down -v --remove-orphans >/dev/null 2>&1 || true
+}
+
+cleanup_ci_compose_fixture() {
+  local compose_project="$1"
+  local temp_root="$2"
+  shift 2
+
+  if (($# > 0)); then
+    compose_down_quiet "$@"
+  fi
+
+  remove_test_volumes "${compose_project}"
+  chmod -R u+rwx "${temp_root}" >/dev/null 2>&1 || true
+  rm -rf "${temp_root}"
 }
 
 write_compose_override() {
