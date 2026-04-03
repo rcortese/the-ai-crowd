@@ -54,8 +54,11 @@ cp .env.example .env
 Edit `.env` and configure at least:
 
 - `TZ`
+- `WORKBENCH_USER=operator` for the published image and pull-first mode
 - `WORKBENCH_UID`
 - `WORKBENCH_GID`
+
+Do not change `WORKBENCH_USER` in pull-first mode. The published image is built with `operator`; choose a different username only when you build locally with `compose.build.yaml`.
 
 Pull the published image, start it, confirm it reached `healthy`, and then open a login shell:
 
@@ -77,6 +80,12 @@ codex
 ```
 
 Your persistent terminal workspace is now ready to use.
+
+## First-Boot Doctor
+
+After the first `docker compose up -d`, confirm the container reaches `healthy`, open a shell, and run the baseline bootstrap checks before treating the workbench as ready.
+
+Use the canonical checklist in [Setup](docs/SETUP.md#first-boot-doctor), including the `DOCKER_GID` host check for `compose.docker.yaml` and the expected `operator` login only in pull-first mode.
 
 ## Modes
 

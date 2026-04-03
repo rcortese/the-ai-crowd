@@ -123,23 +123,51 @@ Optional API keys:
 
 These are runtime secrets for headless flows. Interactive OAuth remains the default path.
 
-## First Login Checklist
+## First-Boot Doctor
 
-From inside the container:
+Use this checklist after the first `docker compose up -d` for either pull-first or local-build mode.
+
+### Outside the container
+
+Confirm that Docker reports the container as `healthy`, not only `Up`:
 
 ```bash
+docker ps --filter name=the-ai-crowd --format 'table {{.Names}}\t{{.Status}}'
+```
+
+If you are using `compose.docker.yaml`, also confirm that `DOCKER_GID` in `.env` matches the host socket group:
+
+```bash
+stat -c %g /var/run/docker.sock
+```
+
+### Inside the container
+
+Open a shell:
+
+```bash
+docker exec -it the-ai-crowd bash -l
+```
+
+Then confirm the baseline:
+
+```bash
+whoami
+pwd
 claude auth login
 gemini auth
 codex
-```
-
-Then confirm the basics:
-
-```bash
 git config --global --get init.defaultBranch
 git config --global --get pull.rebase
 git config --global --get core.editor
 timeout 10 codex sandbox linux -- true
 ```
+
+Expected first-boot signals:
+
+- `whoami` returns `operator` in pull-first mode
+- `pwd` starts in `/workspace/projects`
+- Git defaults return `main`, `false`, and `vim`
+- `timeout 10 codex sandbox linux -- true` exits successfully
 
 If startup fails immediately, the most likely issue is ownership mismatch between `WORKBENCH_UID:WORKBENCH_GID` and the `./data` tree.
