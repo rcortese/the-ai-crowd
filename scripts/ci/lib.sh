@@ -11,7 +11,7 @@ set_workbench_ids() {
 set_ci_runtime_env() {
   export DOCKER_ENABLE=false
 
-  if [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
+  if [[ "${CI_SKIP_BOOTSTRAP_CODEX_SANDBOX:-false}" == "true" ]]; then
     export THE_AI_CROWD_VALIDATE_CODEX_SANDBOX=false
   else
     export THE_AI_CROWD_VALIDATE_CODEX_SANDBOX="${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}"
@@ -70,6 +70,16 @@ if [[ -x /usr/local/bin/the-ai-crowd-bootstrap-check ]]; then
   exec /usr/local/bin/the-ai-crowd-bootstrap-check
 else
   exec /usr/local/bin/ai-crowd-bootstrap-check
+fi
+EOF
+}
+
+container_codex_sandbox_check_command() {
+  cat <<'EOF'
+if [[ -x /usr/local/bin/the-ai-crowd-codex-sandbox-check ]]; then
+  exec /usr/local/bin/the-ai-crowd-codex-sandbox-check
+else
+  exec /usr/local/bin/ai-crowd-codex-sandbox-check
 fi
 EOF
 }

@@ -19,12 +19,11 @@ check_claude_mcp_registered() {
 home_dir="${HOME:-/home/operator}"
 
 if [[ "${THE_AI_CROWD_VALIDATE_CODEX_SANDBOX:-true}" == "true" ]]; then
-  if ! unshare --user --mount true >/dev/null 2>&1; then
-    issue "Codex sandbox validation enabled but unshare for user and mount namespaces is unavailable"
-  fi
-
-  if ! timeout 10 codex sandbox linux -- true >/dev/null 2>&1; then
-    issue "Codex sandbox validation enabled but Codex Linux sandbox is unavailable"
+  if ! /usr/local/bin/the-ai-crowd-codex-sandbox-check >/dev/null 2>"${home_dir}/.local/share/the-ai-crowd/codex-sandbox-validation.status"; then
+    while IFS= read -r sandbox_issue; do
+      [[ -n "${sandbox_issue}" ]] || continue
+      issue "${sandbox_issue}"
+    done < "${home_dir}/.local/share/the-ai-crowd/codex-sandbox-validation.status"
   fi
 fi
 

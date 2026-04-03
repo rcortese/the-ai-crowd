@@ -12,6 +12,8 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      CI_SKIP_BOOTSTRAP_CODEX_SANDBOX: "true"
     permissions:
       contents: read
     concurrency:
@@ -24,6 +26,9 @@ jobs:
 
       - name: Build Docker image
         run: docker compose -f compose.yaml -f compose.build.yaml build the-ai-crowd
+
+      - name: Run Codex sandbox capability check
+        run: bash scripts/ci/codex-sandbox.sh
 
       - name: Run runtime and delegation smoke tests
         run: bash scripts/ci/smoke.sh
