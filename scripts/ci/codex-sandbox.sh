@@ -42,8 +42,18 @@ docker compose "${compose_files[@]}" up -d --no-build "${service}"
 wait_for_service_ready
 
 codex_sandbox_check_cmd="$(container_codex_sandbox_check_command)"
-docker compose "${compose_files[@]}" exec -T \
+output_file="${temp_root}/codex-sandbox-check.log"
+
+if docker compose "${compose_files[@]}" exec -T \
   -e THE_AI_CROWD_VALIDATE_CODEX_SANDBOX=true \
-  "${service}" bash -lc "${codex_sandbox_check_cmd}"
+  "${service}" bash -lc "${codex_sandbox_check_cmd}" >"${output_file}" 2>&1; then
+  :
+elif [[ "${CI_ALLOW_UNSUPPORTED_CODEX_SANDBOX:-false}" == "true" ]] && \
+  grep -Fq "Codex sandbox validation enabled but unshare for user and mount namespaces is unavailable" "${output_file}"; then
+  printf '%s\n' "Skipping Codex sandbox capability check: runner host does not provide user/mount namespace unshare support."
+else
+  cat "${output_file}" >&2
+  exit 1
+fi
 
 cd "${repo_root}"

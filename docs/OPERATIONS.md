@@ -80,6 +80,8 @@ bash scripts/ci/healthcheck.sh
 bash scripts/ci/smoke-upgrade.sh
 ```
 
+`bash scripts/ci/codex-sandbox.sh` remains the dedicated sandbox capability check. It still fails by default when `codex sandbox linux` is unavailable, but CI can opt into `CI_ALLOW_UNSUPPORTED_CODEX_SANDBOX=true` to treat hosted runners without `unshare` support as an explicit skip instead of a false-negative failure.
+
 The container healthcheck verifies:
 
 - expected directories exist

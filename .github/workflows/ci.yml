@@ -14,6 +14,7 @@ jobs:
     timeout-minutes: 25
     env:
       CI_SKIP_BOOTSTRAP_CODEX_SANDBOX: "true"
+      CI_ALLOW_UNSUPPORTED_CODEX_SANDBOX: "true"
     permissions:
       contents: read
     concurrency:
