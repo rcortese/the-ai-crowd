@@ -115,7 +115,7 @@ The base runtime secures the container by:
 - Using `tmpfs` for `/tmp` and `/run`.
 - Defining explicit writable paths through bind mounts.
 
-The default runtime also relaxes seccomp enough for `unshare` and `codex sandbox linux`, because Codex delegation depends on sandbox support being available without an extra overlay.
+The default runtime also relaxes seccomp enough for `unshare` and `codex sandbox linux`, because Codex delegation depends on sandbox support being available without an extra overlay. In practice this means `seccomp:unconfined`, which increases the syscall surface inside the container and is a deliberate tradeoff for predictable sandbox-backed Codex delegation. See [Architecture](docs/ARCHITECTURE.md#trust-and-security-boundary) for the trust-boundary impact and why `compose.docker.yaml` is not part of that requirement.
 
 The Docker-aware mode intentionally expands this trust boundary further by mounting `/var/run/docker.sock` and adding the host socket group selected through `DOCKER_GID`. Use this mode only when necessary.
 
