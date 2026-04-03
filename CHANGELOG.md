@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a dedicated runtime bootstrap check script
+
+### Changed
+- Implemented Docker-aware Codex sandbox behavior and made CI sandbox validation configurable
+- Clarified the pull-first bootstrap flow, seccomp sandbox tradeoffs, and runtime baseline guidance across project docs
+- Standardized binary and project names to the `the-ai-crowd` prefix
+- Gated tagged releases on CI before Docker Hub publishing
+
+### Fixed
+- Fixed the local CI harness for production-like Docker environments
+- Fixed smoke home volume bootstrap handling
+- Split bootstrap validation from runtime health checks to tighten container startup validation
+
 ## [0.4.0] - 2026-04-02
 
 ### Changed

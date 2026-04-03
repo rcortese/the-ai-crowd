@@ -60,7 +60,7 @@ docker exec -it the-ai-crowd bash -l
 ```
 
 On first boot, wait for `docker ps` to show the container as `healthy`, not only `Up`, before entering the shell. The container starts in `/workspace/projects` as the configured non-root user.
-Bundled npm CLIs are exposed through a user-writable prefix at `~/.local/share/the-ai-crowd/npm-global`, so future `npm install -g ...` updates do not require `root`.
+Bundled npm CLIs are exposed through a user-writable prefix at `~/.local/share/the-ai-crowd/npm-global`, so future `npm install -g ...` updates do not require `root`. Those updates are supported operator-scoped overrides; the image remains the default baseline for pinned tool versions.
 
 ## Path B: Build From Source
 

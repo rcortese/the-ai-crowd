@@ -18,7 +18,7 @@ This document records maintainer rules and project invariants. It is not the pri
 - Do not switch to Alpine
 - Install core CLIs during image build, not at container startup
 - Pin tool versions explicitly
-- Treat the image as the source of truth for the runtime toolchain
+- Treat the image as the source of truth for the default runtime toolchain baseline
 
 ## Authentication And Secrets
 
@@ -30,8 +30,9 @@ This document records maintainer rules and project invariants. It is not the pri
 ## Update Model
 
 - Upgrade through deliberate image pulls or rebuilds
-- Do not rely on in-container self-mutation
-- Do not let the running container become the source of truth
+- Do not rely on in-container self-mutation as the only upgrade path
+- Allow user-scoped npm CLI overrides only as an operator convenience layered on top of the pinned image baseline
+- Do not let the running container become the maintainer source of truth
 - Keep reproducible build inputs for pinned components such as `claude-delegator`
 
 `latest` may exist as a convenience distribution tag, but maintainers should preserve a path to reproducible, intentional version pinning.
@@ -73,11 +74,12 @@ Aim for practical containment, not hardening theater that breaks the workstation
 - `scripts/ci/lib.sh`: shared helpers
 - `scripts/ci/smoke.sh`: runtime and delegation smoke coverage
 - `scripts/ci/healthcheck.sh`: healthcheck validation
+- `scripts/ci/smoke-upgrade.sh`: persisted-state recovery coverage
 
 Keep workflow responsibilities narrow:
 
 - `lint.yml`: static checks only
-- `ci.yml`: image build, smoke coverage, and healthcheck coverage
+- `ci.yml`: image build, smoke coverage, healthcheck coverage, and persisted-state recovery coverage
 - `publish-dockerhub.yml`: publication only
 
 ## Non-Negotiables

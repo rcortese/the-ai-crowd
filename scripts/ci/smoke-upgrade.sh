@@ -8,7 +8,7 @@
 #   docker compose -f compose.yaml -f compose.build.yaml build the-ai-crowd
 #   bash scripts/ci/smoke-upgrade.sh
 #
-# Not wired into the default CI path. Required for pre-release verification.
+# Wired into the default CI path for persisted-state recovery verification.
 
 set -euo pipefail
 

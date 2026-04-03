@@ -141,9 +141,9 @@ npm install -g @google/gemini-cli@latest
 npm install -g @openai/codex@latest
 ```
 
-The image still carries pinned seed versions as a fallback, but once a CLI is updated in the user prefix, that version takes precedence on `PATH`.
+The image still carries pinned seed versions as the default runtime baseline, but once a CLI is updated in the user prefix, that operator-scoped override takes precedence on `PATH`.
 
-Use an image pull or rebuild when you want updated base OS packages or a new default tool baseline. Use manual `npm install -g` when you only need a newer CLI release.
+Use an image pull or rebuild when you want updated base OS packages or a new default tool baseline. Use manual `npm install -g` when you only need a newer CLI release for that persisted operator environment rather than a new maintainer baseline.
 
 ## Troubleshooting
 
