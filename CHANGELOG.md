@@ -7,19 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-04-04
+
 ### Added
-- Added a dedicated runtime bootstrap check script
+- Runtime bootstrap check script to improve container startup reliability and validation
+- Configuration consistency check for release inputs to ensure deployment stability
+- Release gating for tag pushes to ensure CI success before deployment
 
 ### Changed
-- Implemented Docker-aware Codex sandbox behavior and made CI sandbox validation configurable
-- Clarified the pull-first bootstrap flow, seccomp sandbox tradeoffs, and runtime baseline guidance across project docs
-- Standardized binary and project names to the `the-ai-crowd` prefix
-- Gated tagged releases on CI before Docker Hub publishing
+- Standardized binary and project names with the `the-ai-crowd` prefix across the repository
+- Implemented Docker-aware Codex sandbox behavior and decoupled sandbox logic from Docker host mode
+- Split bootstrap validation from runtime health checks to tighten container startup verification
+- Enhanced documentation regarding onboarding defaults, bootstrap flow, seccomp tradeoffs, and runtime baselines
 
-### Fixed
-- Fixed the local CI harness for production-like Docker environments
-- Fixed smoke home volume bootstrap handling
-- Split bootstrap validation from runtime health checks to tighten container startup validation
+### Security
+- Restored default-deny security posture by migrating from relaxed `unconfined` seccomp overlays to a centralized tracked profile (`seccomp/the-ai-crowd.json`) in the primary `compose.yaml` while maintaining Codex sandbox compatibility
 
 ## [0.4.0] - 2026-04-02
 
@@ -94,7 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.2.1...v0.3.0
