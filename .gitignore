@@ -1,4 +1,5 @@
 .env
+data/
 data/home/
 data/projects/
 data/references/
