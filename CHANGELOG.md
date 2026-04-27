@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-04-27
+
+### Changed
+- Kept the default Codex MCP model at `gpt-5.3-codex` after authenticated smoke testing with Codex CLI 0.125.0 confirmed `gpt-5.3-codex` inference succeeds, while newer `gpt-5.4-codex` and `gpt-5.5-codex` aliases are not available for the current ChatGPT-backed Codex account.
+- Updated pinned CLI baselines to `@openai/codex` 0.125.0, `@anthropic-ai/claude-code` 2.1.119, and `@google/gemini-cli` 0.39.1.
+
 ## [0.4.1] - 2026-04-04
 
 ### Added
@@ -96,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/the-ai-crowd/the-ai-crowd/compare/v0.3.0...v0.3.1
