@@ -5,6 +5,13 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/ci/lib.sh
 source "${script_dir}/lib.sh"
 
+# On hosts that cannot provide user/mount namespace unshare, allow the service
+# to become ready with bootstrap sandbox validation disabled, then run the
+# explicit sandbox probe below and report the unsupported-host skip there.
+if [[ "${CI_ALLOW_UNSUPPORTED_CODEX_SANDBOX:-false}" == "true" ]]; then
+  export CI_SKIP_BOOTSTRAP_CODEX_SANDBOX=true
+fi
+
 service="the-ai-crowd"
 repo_root="$(pwd)"
 setup_ci_compose_fixture "${repo_root}" "the-ai-crowd-ci"
